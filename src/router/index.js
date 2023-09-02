@@ -59,7 +59,9 @@ export const constantRoutes = [
   {
     path: "/management",
     component: Layout,
-    redirect: "/management",
+    redirect: "",
+    name: "management",
+    meta: { title: "管理后台", icon: "el-icon-s-help" },
     children: [
       {
         path: "management",
@@ -67,18 +69,38 @@ export const constantRoutes = [
         component: () => import("@/views/management/index"),
         meta: { title: "后台管理", icon: "dashboard" },
       },
+      {
+        path: "dashboard",
+        name: "dashboard",
+        component: () => import("@/views/management/dashboard"),
+        meta: { title: "平台数据看板", icon: "dashboard" },
+      },
+      {
+        path: "announcement",
+        name: "announcement",
+        component: () => import("@/views/management/announcement"),
+        meta: { title: "编辑公告", icon: "dashboard" },
+      },
     ],
   },
   {
     path: "/purchase",
     component: Layout,
-    redirect: "/purchase",
+    redirect: "",
+    name: "purchase",
+    meta: { title: "付费购买", icon: "el-icon-s-help" },
     children: [
       {
         path: "purchase",
         name: "purchase",
         component: () => import("@/views/purchase/index"),
-        meta: { title: "付费购买", icon: "dashboard" },
+        meta: { title: "对公转账", icon: "dashboard" },
+      },
+      {
+        path: "success",
+        name: "success",
+        component: () => import("@/views/purchase/success"),
+        meta: { title: "下单成功", icon: "dashboard" },
       },
     ],
   },
@@ -98,13 +120,39 @@ export const constantRoutes = [
   {
     path: "/setting",
     component: Layout,
-    redirect: "/setting",
+    redirect: "",
+    name: "setting",
+    meta: { title: "设置模块", icon: "el-icon-s-help" },
     children: [
       {
         path: "setting",
         name: "setting",
-        component: () => import("@/views/setting/index"),
-        meta: { title: "设置", icon: "dashboard" },
+        component: () => import("@/views/setting/documentprinter"),
+        meta: { title: "文档打印机设置", icon: "dashboard" },
+      },
+      {
+        path: "pictureprinter",
+        name: "pictureprinter",
+        component: () => import("@/views/setting/pictureprinter"),
+        meta: { title: "证照打印机设置", icon: "dashboard" },
+      },
+      {
+        path: "shopcollection",
+        name: "shopcollection",
+        component: () => import("@/views/setting/shopcollection"),
+        meta: { title: "店铺&收款设置", icon: "dashboard" },
+      },
+      {
+        path: "price",
+        name: "price",
+        component: () => import("@/views/setting/price"),
+        meta: { title: "打印价格设置", icon: "dashboard" },
+      },
+      {
+        path: "download",
+        name: "download",
+        component: () => import("@/views/setting/download"),
+        meta: { title: "宣传物料下载", icon: "dashboard" },
       },
     ],
   },
@@ -137,37 +185,30 @@ export const constantRoutes = [
   {
     path: "/install",
     component: Layout,
-    redirect: "/install",
+    redirect: "",
+    name: "install",
+    meta: { title: "安装&登录", icon: "el-icon-s-help" },
     children: [
       {
         path: "install",
         name: "install",
         component: () => import("@/views/install/index"),
-        meta: { title: "安装&登录", icon: "dashboard" },
+        meta: { title: "安装", icon: "dashboard" },
+      },
+      {
+        path: "loginbyid",
+        name: "loginbyid",
+        component: () => import("@/views/install/loginbyid"),
+        meta: { title: "登录_门店ID注册", icon: "dashboard" },
+      },
+      {
+        path: "loginbyqrcode",
+        name: "loginbyqrcode",
+        component: () => import("@/views/install/loginbyqrcode"),
+        meta: { title: "登录_店主微信登录", icon: "dashboard" },
       },
     ],
   },
-  // {
-  //   path: "/example",
-  //   component: Layout,
-  //   redirect: "/example/table",
-  //   name: "Example",
-  //   meta: { title: "Example", icon: "el-icon-s-help" },
-  //   children: [
-  //     {
-  //       path: "table",
-  //       name: "Table",
-  //       component: () => import("@/views/table/index"),
-  //       meta: { title: "Table", icon: "table" },
-  //     },
-  //     {
-  //       path: "tree",
-  //       name: "Tree",
-  //       component: () => import("@/views/tree/index"),
-  //       meta: { title: "Tree", icon: "tree" },
-  //     },
-  //   ],
-  // },
 
   // {
   //   path: "/form",

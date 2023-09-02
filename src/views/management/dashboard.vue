@@ -4,34 +4,48 @@
       <h3>本周数据</h3>
       <div class="dashboard">
         <div class="dashboard-item">
-          <p class="title">门店营业额</p>
+          <p class="title">平台营业流水</p>
           <p class="sum">¥ 102.5</p>
           <p class="count">订单量：2355单</p>
         </div>
         <div class="dashboard-item border-left-solid">
-          <p class="title">店内打印收入</p>
+          <p class="title">平台服务收入</p>
           <p class="sum">¥ 102.5</p>
-          <p class="count">订单量：2355单</p>
+          <p class="count">商户手续费：5.7元</p>
+          <p class="count">证照&AI服务费：57元</p>
         </div>
         <div class="dashboard-item">
-          <p class="title">远程下单收入</p>
+          <p class="title">年费销售收入</p>
           <p class="sum">¥ 102.5</p>
-          <p class="count">订单量：2355单</p>
+          <p class="count">门店转化：1家</p>
         </div>
       </div>
     </div>
     <div class="container">
-      <div class="filter-container">
-        <div class="display-inline">
-          <span class="chart-header">营业额统计</span>
-          <span class="font-size14px">(元)</span>
+      <div
+        style="
+          padding: 16px;
+          border-bottom: 1px solid rgb(219, 214, 214);
+          height: 70px;
+        "
+      >
+        <div style="display: inline">
+          <span
+            style="
+              font-size: 14px;
+              font-family: PingFangSC-Medium, PingFang SC;
+              font-weight: 600;
+              line-height: 35px;
+            "
+            >平台服务收入 (元)</span
+          >
         </div>
-        <div class="filter">
+        <div style="display: inline; float: right">
           <el-button type="text">今日</el-button>
           <el-button type="text">本周</el-button>
           <el-button type="text">本月</el-button>
           <el-date-picker
-            class="margin-left20px"
+            style="margin-left: 20px"
             v-model="value1"
             type="daterange"
             range-separator="-"
@@ -41,21 +55,7 @@
           </el-date-picker>
         </div>
       </div>
-      <div class="display-flex">
-        <div id="echart1" class="chart-container"></div>
-        <div class="announcement-container">
-          <h4>增收赚钱活动公告</h4>
-          <p>推荐客户使用，赢现金</p>
-          <p>推荐客户使用，赢现金</p>
-          <p>推荐客户使用，赢现金</p>
-          <div class="img-container">
-            <el-image
-              class="qr-code"
-              src="https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg"
-            ></el-image>
-          </div>
-        </div>
-      </div>
+      <div id="echart1" style="width: auto; height: calc(100vh - 150px)"></div>
     </div>
   </div>
 </template>
@@ -106,24 +106,7 @@ h3 {
   padding-top: 16px;
   font-size: 14px;
   font-family: PingFangSC-Medium, PingFang SC;
-  font-weight: 500;
-}
-h4 {
-  font-size: 14px;
-  font-family: PingFangSC-Regular, PingFang SC;
-  font-weight: 500;
-}
-.display-flex {
-  display: flex;
-}
-.display-inline {
-  display: inline;
-}
-.margin-left20px {
-  margin-left: 20px;
-}
-.font-size14px {
-  font-size: 14px;
+  font-weight: 600;
 }
 .container {
   background-color: white;
@@ -139,11 +122,6 @@ h4 {
 }
 .border-none {
   border: none;
-}
-.platform-income {
-  border-top: none;
-  border-right: none;
-  border-bottom: none;
 }
 .border-left-solid {
   border-left: 1px solid #f0f0f0;
@@ -166,43 +144,9 @@ h4 {
   font-weight: 400;
   color: #8c8c8c;
 }
-.filter-container {
-  padding: 16px;
-  border-bottom: 1px solid rgb(219, 214, 214);
-  height: 70px;
-}
-.chart-header {
-  font-size: 14px;
-  font-family: PingFangSC-Medium, PingFang SC;
-  font-weight: 600;
-  line-height: 35px;
-}
-.filter {
-  display: inline;
-  float: right;
-}
-.chart-container {
-  width: 80%;
-  height: 400px;
-}
-.announcement-container {
-  width: 20%;
-  padding: 20px;
-  border-left: 1px solid rgb(248, 246, 246);
-}
-.announcement-container p {
-  font-size: 12px;
-  font-family: PingFangSC-Regular, PingFang SC;
-  font-weight: 400;
-}
-.img-container {
-  margin-top: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.qr-code {
-  width: 100px;
-  height: 100px;
+.platform-income {
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
 }
 </style>
