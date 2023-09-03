@@ -40,7 +40,7 @@
             <el-button plain>导出</el-button>
           </el-form-item>
           <el-form-item class="float-right">
-            <el-button type="success">添加门店</el-button>
+            <el-button class="btn-add">添加门店</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -53,7 +53,14 @@
         </el-table-column>
         <el-table-column prop="type" label="商户类型" width="180">
         </el-table-column>
-        <el-table-column prop="picture" label="提前付款" width="180">
+        <el-table-column prop="picture" label="提前付款" width="100">
+          <template slot-scope="scope">
+            <el-image
+              class="qr-code"
+              :src="scope.row.picture"
+              :preview-src-list="srcList"
+            ></el-image>
+          </template>
         </el-table-column>
       </el-table>
     </div>
@@ -70,19 +77,24 @@ export default {
           shopName: "湘印天下",
           createOn: "2023-7-30",
           type: "使用体验",
-          picture: "",
+          picture:
+            "https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg",
         },
         {
           shopId: "116",
           shopName: "湘印天下",
           createOn: "2023-7-30",
           type: "使用体验",
-          picture: "",
+          picture:
+            "https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg",
         },
       ],
       formInline: {
         type: "0",
       },
+      srcList: [
+        "https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg",
+      ],
     };
   },
 };
@@ -156,5 +168,13 @@ export default {
 .table-section {
   width: 90%;
   margin-left: 16px;
+}
+.btn-add {
+  background-color: #40db98;
+  color: #ffffff;
+}
+.qr-code {
+  width: 28px;
+  height: 28px;
 }
 </style>

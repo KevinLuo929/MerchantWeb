@@ -13,12 +13,19 @@
       <div class="padding-left16px">
         <h3>门店宣传海报物料包</h3>
         <el-table :data="tableData" class="width100per">
-          <el-table-column prop="name" label="宣传素材名称" width="280">
+          <el-table-column prop="name" label="宣传素材名称" width="300">
           </el-table-column>
-          <el-table-column prop="size" label="尺寸" width="80">
+          <el-table-column prop="size" label="尺寸" width="120">
           </el-table-column>
-          <el-table-column prop="updateOn" label="更新时间"> </el-table-column>
-          <el-table-column prop="operation" label="操作"> </el-table-column>
+          <el-table-column prop="updateOn" label="更新时间" width="200">
+          </el-table-column>
+          <el-table-column prop="operation" label="操作">
+            <template slot-scope="scope">
+              <el-button :key="scope.row.download" type="text"
+                ><img src="../../assets/download.svg" alt=""
+              /></el-button>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
       <div class="btn-section">
