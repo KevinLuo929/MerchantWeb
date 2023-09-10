@@ -1,24 +1,16 @@
-import request from '@/utils/request'
+import http from "@/utils/request";
 
-export function login(data) {
-  return request({
-    url: '/vue-admin-template/user/login',
-    method: 'post',
-    data
-  })
+export async function login(data) {
+  return await http.login("/api/Login/Merchant", data);
 }
 
-export function getInfo(token) {
-  return request({
-    url: '/vue-admin-template/user/info',
-    method: 'get',
-    params: { token }
-  })
+export async function getInfo() {
+  return http.get("/api/sysUser/getInfo");
 }
 
 export function logout() {
   return request({
-    url: '/vue-admin-template/user/logout',
-    method: 'post'
-  })
+    url: "/vue-admin-template/user/logout",
+    method: "post",
+  });
 }

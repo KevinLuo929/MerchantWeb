@@ -2,78 +2,145 @@
   <div>
     <div class="padding20px">
       <span class="todo-order">未完成订单</span
-      ><span class="todo-count"> 共1个</span>
+      ><span class="todo-count"> 共{{ totalNumber }}个</span>
       <i class="el-icon-refresh-right float-right"></i>
     </div>
-    <div class="order-info-section">
-      <div class="border-bottom">
-        <div class="order-info-date">
-          <span>2023-04-07 11:56</span>
-          <span class="order-code-label"
-            >取件码：<span class="order-code">00-12</span></span
-          >
+    <div v-show="hasOrder">
+      <div
+        v-for="item in orderList"
+        :key="item.orderId"
+        class="order-info-section"
+      >
+        <div class="border-bottom">
+          <div class="order-info-date">
+            <span>{{ item.created }}</span>
+            <span class="order-code-label"
+              >取件码：<span class="order-code">{{
+                item.claimCode
+              }}</span></span
+            >
+          </div>
+        </div>
+        <div>
+          <div class="order-detail-section">
+            <div>
+              <img
+                :src="require('../../assets/' + item.documentType + '.png')"
+                alt=""
+              />
+            </div>
+            <div class="order-detail-line">
+              <div class="order-detail-name">
+                {{ item.name }}
+                <span class="order-status">{{ item.status }}</span>
+              </div>
+              <div class="order-detail-info">
+                A4|纵向|黑白|单面|4份|打印[1-12]页
+              </div>
+            </div>
+          </div>
+          <div class="reminder-container">
+            <i class="el-icon-warning reminder-icon"></i>
+            <span class="reminder-label">搜索不到可用打印机</span>
+          </div>
+        </div>
+        <div class="order-footer">
+          <div class="display-flex">
+            <div>
+              <img
+                class="vertical-align-bottom"
+                src="../../assets/wechatpay.svg"
+                alt=""
+              /><span class="order-price">¥{{ item.price }}</span>
+              <img
+                class="vertical-align-bottom margin-left15px"
+                src="../../assets/shop.svg"
+                alt=""
+              />
+              <span class="printer-type">{{ item.printType }}</span>
+            </div>
+            <div class="operation-container">
+              <div class="operation">
+                <img src="../../assets/printer.svg" alt="" />
+              </div>
+              <div class="operation">
+                <img src="../../assets/folder_download.svg" alt="" />
+              </div>
+              <div class="operation">
+                <img src="../../assets/folder.svg" alt="" />
+              </div>
+              <div class="operation">
+                <img src="../../assets/cancel.svg" alt="" />
+              </div>
+              <div class="operation">
+                <img src="../../assets/finish.svg" alt="" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <div>
-        <div class="order-detail-section">
-          <div>
-            <img src="../../assets/pdf.png" alt="" />
-          </div>
-          <div class="order-detail-line">
-            <div class="order-detail-name">
-              测试文档.pdf
-              <span class="order-status">已下载</span>
-            </div>
-            <div class="order-detail-info">
-              A4|纵向|黑白|单面|4份|打印[1-12]页
-            </div>
-          </div>
-        </div>
-        <div class="reminder-container">
-          <i class="el-icon-warning reminder-icon"></i>
-          <span class="reminder-label">搜索不到可用打印机</span>
-        </div>
-      </div>
-      <div class="order-footer">
-        <div class="display-flex">
-          <div>
-            <img
-              class="vertical-align-bottom"
-              src="../../assets/wechatpay.svg"
-              alt=""
-            /><span class="order-price">¥1.2</span>
-            <img
-              class="vertical-align-bottom margin-left15px"
-              src="../../assets/shop.svg"
-              alt=""
-            />
-            <span class="printer-type">店内打印</span>
-          </div>
-          <div class="operation-container">
-            <div class="operation">
-              <img src="../../assets/printer.svg" alt="" />
-            </div>
-            <div class="operation">
-              <img src="../../assets/folder_download.svg" alt="" />
-            </div>
-            <div class="operation">
-              <img src="../../assets/folder.svg" alt="" />
-            </div>
-            <div class="operation">
-              <img src="../../assets/cancel.svg" alt="" />
-            </div>
-            <div class="operation">
-              <img src="../../assets/finish.svg" alt="" />
-            </div>
-          </div>
-        </div>
-      </div>
+    </div>
+    <div v-show="!hasOrder" class="no-order-section">
+      <div><img src="../../assets/print_big.png" alt="" /></div>
+      <div class="no-order-text">暂时没有订单哦~</div>
     </div>
   </div>
 </template>
 
 <script>
-export default {};
+import printerApi from "@/api/printer";
+export default {
+  data() {
+    return {
+      hasOrder: true,
+      totalNumber: 0,
+      orderList: [
+        {
+          orderId: "1",
+          created: "2020-10-1 9:56",
+          claimCode: "00-13",
+          documentType: "pdf",
+          name: "测试文档.pdf",
+          status: "已下载",
+          price: 1.2,
+          printType: "店内打印",
+        },
+        {
+          orderId: "2",
+          created: "2023-10-1 11:56",
+          claimCode: "00-12",
+          documentType: "word",
+          name: "测试文档2.word",
+          status: "已退款",
+          price: 1.2,
+          printType: "远程下单（到店自取）",
+        },
+      ],
+    };
+  },
+  created() {
+    this.search();
+  },
+  methods: {
+    async search() {
+      let res = printerApi
+        .getOrder({
+          pageIndex: 21474836,
+          pageSize: 100,
+          shopId: 2147483647,
+          userId: 2147483647,
+          orderStatus: 0,
+        })
+        .then((res) => {
+          this.totalNumber = res.totalNumber;
+          //this.orderList = res.result;
+          // if (this.totalNumber > 0) {
+          //   this.hasOrder = true;
+          // }
+        });
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -117,7 +184,7 @@ export default {};
 }
 .order-info-section {
   background-color: white;
-  margin: 10px;
+  margin: 16px;
   border-radius: 10px;
 }
 .order-info-date {
@@ -211,5 +278,17 @@ export default {};
 }
 .operation-container {
   flex: 1 1 auto;
+}
+
+.no-order-section {
+  text-align: center;
+  padding: 100px;
+}
+.no-order-text {
+  font-size: 14px;
+  font-family: PingFangSC-Regular, PingFang SC;
+  font-weight: 400;
+  color: #595959;
+  margin-top: 24px;
 }
 </style>

@@ -45,7 +45,7 @@
         </el-form>
       </div>
       <el-table :data="tableData" class="table-section">
-        <el-table-column prop="shopId" label="门店ID1" width="180">
+        <el-table-column prop="shopId" label="门店ID" width="180">
         </el-table-column>
         <el-table-column prop="shopName" label="门店名称" width="180">
         </el-table-column>
@@ -68,27 +68,12 @@
 </template>
 
 <script>
+import managementApi from "@/api/management";
+
 export default {
   data() {
     return {
-      tableData: [
-        {
-          shopId: "112",
-          shopName: "湘印天下",
-          createOn: "2023-7-30",
-          type: "使用体验",
-          picture:
-            "https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg",
-        },
-        {
-          shopId: "116",
-          shopName: "湘印天下",
-          createOn: "2023-7-30",
-          type: "使用体验",
-          picture:
-            "https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg",
-        },
-      ],
+      tableData: [],
       formInline: {
         type: "0",
       },
@@ -96,6 +81,35 @@ export default {
         "https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg",
       ],
     };
+  },
+  created() {
+    console.log("created: 页面加载后执行方法");
+    this.tableData = [
+      {
+        shopId: "112",
+        shopName: "湘印天下",
+        createOn: "2023-7-30",
+        type: "使用体验",
+        picture:
+          "https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg",
+      },
+      {
+        shopId: "116",
+        shopName: "湘印天下",
+        createOn: "2023-7-30",
+        type: "使用体验",
+        picture:
+          "https://cube.elemecdn.com/6/94/4d3ea53c084bad6931a56d5158a48jpeg.jpeg",
+      },
+    ];
+  },
+  methods: {
+    async search() {
+      let res = managementApi.getData();
+      if (res.success) {
+        this.tableData = res.data;
+      }
+    },
   },
 };
 </script>
