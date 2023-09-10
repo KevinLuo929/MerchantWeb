@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="padding20px">
-      <span class="todo-order">未完成订单</span
+      <span class="todo-order">正在打印订单</span
       ><span class="todo-count"> 共{{ totalNumber }}个</span>
       <i class="el-icon-refresh-right float-right"></i>
     </div>
@@ -41,7 +41,7 @@
           </div>
           <div class="reminder-container">
             <i class="el-icon-warning reminder-icon"></i>
-            <span class="reminder-label">搜索不到可用打印机</span>
+            <span class="reminder-label">黑白6号机正在打印中...</span>
           </div>
         </div>
         <div class="order-footer">
@@ -60,76 +60,21 @@
               <span class="printer-type">{{ item.printType }}</span>
             </div>
             <div class="operation-container">
-              <div @click="handlePrint" class="operation">
-                <img src="../../assets/printer.png" alt="" />
+              <div @click="handlePause" class="operation">
+                <img src="../../assets/pause.png" alt="" />
               </div>
-              <div @click="handleDownload" class="operation">
-                <img src="../../assets/folder_download.png" alt="" />
-              </div>
-              <div @click="handleFolder" class="operation">
-                <img src="../../assets/folder.png" alt="" />
-              </div>
-              <div @click="handleCancel" class="operation">
-                <img src="../../assets/cancel.png" alt="" />
-              </div>
-              <div @click="handleFinish" class="operation">
-                <img src="../../assets/finish.png" alt="" />
+              <div @click="handleRunning" class="operation">
+                <img src="../../assets/running.png" alt="" />
               </div>
             </div>
           </div>
         </div>
-        <el-dialog
-          :visible.sync="dialogDownload"
-          width="30%"
-          center
-          :before-close="handleClose"
-        >
-          <span slot="title" class="dialog-title">请选择需要下载的文件</span>
-
-          <div class="order-detail-section">
-            <div class="checkbox">
-              <el-checkbox v-model="checked"></el-checkbox>
-            </div>
-            <div class="margin-left10px">
-              <img
-                :src="require('../../assets/' + item.documentType + '.png')"
-                alt=""
-              />
-            </div>
-            <div class="order-detail-line">
-              <div class="order-detail-name">
-                {{ item.name }}
-              </div>
-              <div class="order-detail-info">
-                A4|纵向|黑白|单面|4份|打印[1-12]页
-              </div>
-            </div>
-          </div>
-          <div slot="footer" class="dialog-footer">
-            <el-row>
-              <el-col :span="12">
-                <el-checkbox class="selectAll" v-model="selectAll"
-                  >全选</el-checkbox
-                >
-              </el-col>
-              <el-col :span="12">
-                <el-button class="btn-download" @click="dialogDownload = false"
-                  >下载</el-button
-                >
-              </el-col>
-            </el-row>
-          </div>
-        </el-dialog>
       </div>
-    </div>
-    <div v-show="!hasOrder" class="no-order-section">
-      <div><img src="../../assets/print_big.png" alt="" /></div>
-      <div class="no-order-text">暂时没有订单哦~</div>
     </div>
   </div>
 </template>
-
-<script>
+  
+  <script>
 import printerApi from "@/api/printer";
 export default {
   data() {
@@ -184,46 +129,17 @@ export default {
           // }
         });
     },
-    async handlePrint() {
-      console.log("handlePrint");
+    async handlePause() {
+      console.log("handlePause");
     },
-    async handleDownload() {
+    async handleRunning() {
       this.dialogDownload = true;
-    },
-    async handleFolder() {
-      console.log("handleFolder");
-    },
-    async handleCancel() {
-      this.$confirm("是否确认取消订单并进行退款?", {
-        confirmButtonText: "确 认",
-        cancelButtonText: "取 消",
-        type: "warning",
-      })
-        .then(() => {
-          //doSomething()
-        })
-        .catch(() => {
-          //doSomething()
-        });
-    },
-    async handleFinish() {
-      this.$confirm("是否确认已完成订单并收款?", {
-        confirmButtonText: "确 认",
-        cancelButtonText: "取 消",
-        type: "warning",
-      })
-        .then(() => {
-          //doSomething()
-        })
-        .catch(() => {
-          //doSomething()
-        });
     },
   },
 };
 </script>
-
-<style scoped>
+  
+  <style scoped>
 .vertical-align-bottom {
   vertical-align: bottom;
 }
@@ -304,7 +220,7 @@ export default {
   font-size: 14px;
   font-family: PingFangSC-Regular, PingFang SC;
   font-weight: 400;
-  color: #40db98;
+  color: #ff4d4f;
   padding-right: 10px;
 }
 .order-detail-info {
@@ -320,12 +236,12 @@ export default {
   width: 99%;
   height: 40px;
   margin: 10px auto;
-  background-color: #fffbe6;
+  background-color: rgba(230, 247, 255, 1);
   border-radius: 5px;
   padding: 10px;
 }
 .reminder-icon {
-  color: #ffe58f;
+  color: #4672eb;
 }
 .reminder-label {
   font-size: 14px;

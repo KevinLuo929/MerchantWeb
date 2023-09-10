@@ -169,19 +169,35 @@ export const constantRoutes = [
       },
     ],
   },
+
   {
     path: "/print",
     component: Layout,
-    redirect: "/print",
+    redirect: "",
+    name: "print",
+    meta: { title: "打印", icon: "el-icon-s-help" },
     children: [
       {
-        path: "print",
-        name: "print",
+        path: "index",
+        name: "index",
         component: () => import("@/views/print/index"),
-        meta: { title: "打印", icon: "dashboard" },
+        meta: { title: "未完成订单", icon: "dashboard" },
+      },
+      {
+        path: "printing",
+        name: "printing",
+        component: () => import("@/views/print/printing"),
+        meta: { title: "正在打印订单", icon: "dashboard" },
+      },
+      {
+        path: "printed",
+        name: "printed",
+        component: () => import("@/views/print/printed"),
+        meta: { title: "已完成订单", icon: "dashboard" },
       },
     ],
   },
+
   {
     path: "/install",
     component: Layout,
