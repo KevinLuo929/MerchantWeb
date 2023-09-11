@@ -1,9 +1,30 @@
 <template>
   <div>
     <div class="padding20px">
-      <span class="todo-order">已完成订单</span
-      ><span class="todo-count"> 共{{ totalNumber }}个</span>
-      <i class="el-icon-refresh-right float-right"></i>
+      <el-row>
+        <el-col :span="10" class="line-height40px">
+          <span class="todo-order">已完成订单</span
+          ><span class="todo-count"> 共{{ totalNumber }}个</span></el-col
+        >
+        <div class="filter-section">
+          <el-input
+            placeholder="查询门店请输入门店ID"
+            v-model="input2"
+            class="width400px"
+          >
+            <template slot="append"
+              ><el-button class="padding-left5px" type="text"
+                >搜索</el-button
+              ></template
+            >
+          </el-input>
+          <el-button
+            class="btn-search"
+            type="text"
+            icon="el-icon-refresh-right"
+          ></el-button>
+        </div>
+      </el-row>
     </div>
     <div v-show="hasOrder">
       <div
@@ -141,6 +162,9 @@ export default {
 </script>
     
     <style scoped>
+.width400px {
+  width: 400px;
+}
 .vertical-align-bottom {
   vertical-align: bottom;
 }
@@ -155,6 +179,9 @@ export default {
 }
 .margin-left15px {
   margin-left: 15px;
+}
+.padding-left5px {
+  padding-left: 5px;
 }
 .padding20px {
   padding: 20px;
@@ -298,5 +325,17 @@ export default {
   background-color: #40db98;
   color: #ffffff;
   float: right;
+}
+.line-height40px {
+  line-height: 40px;
+}
+.filter-section {
+  float: right;
+  padding-right: 20px;
+}
+.btn-search {
+  font-size: 20px;
+  margin-left: 10px;
+  color: #1f1f1f;
 }
 </style>

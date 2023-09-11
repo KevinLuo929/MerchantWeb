@@ -20,7 +20,7 @@
       </el-row>
       <div class="detail-item">
         <div>
-          <img src="../../assets/printer.png" alt="" />
+          <img src="../../assets/large_printer.png" alt="" />
         </div>
         <div class="margin-left10px">
           <span class="printer-info"
@@ -50,7 +50,7 @@
       </div>
       <div class="detail-item">
         <div>
-          <img src="../../assets/printer.png" alt="" />
+          <img src="../../assets/large_printer_disable.png" alt="" />
         </div>
         <div class="margin-left10px">
           <span class="printer-info"

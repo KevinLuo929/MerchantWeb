@@ -32,7 +32,14 @@
             <div class="order-detail-line">
               <div class="order-detail-name">
                 {{ item.name }}
-                <span class="order-status">{{ item.status }}</span>
+                <span
+                  :class="[
+                    item.status == '已下载'
+                      ? 'order-status order-status-downloaded'
+                      : 'order-status order-status-refunded',
+                  ]"
+                  >{{ item.status }}</span
+                >
               </div>
               <div class="order-detail-info">
                 A4|纵向|黑白|单面|4份|打印[1-12]页
@@ -72,8 +79,19 @@
               <div @click="handleCancel" class="operation">
                 <img src="../../assets/cancel.png" alt="" />
               </div>
-              <div @click="handleFinish" class="operation">
+              <div
+                v-if="item.status == '已下载'"
+                @click="handleFinish"
+                class="operation"
+              >
                 <img src="../../assets/finish.png" alt="" />
+              </div>
+              <div
+                v-if="item.status == '已退款'"
+                @click="handleFinish"
+                class="operation"
+              >
+                <img src="../../assets/finish_disable.png" alt="" />
               </div>
             </div>
           </div>
@@ -86,9 +104,13 @@
         >
           <span slot="title" class="dialog-title">请选择需要下载的文件</span>
 
-          <div class="order-detail-section">
+          <div
+            v-for="item in downloadList"
+            :key="item.orderId"
+            class="order-detail-section"
+          >
             <div class="checkbox">
-              <el-checkbox v-model="checked"></el-checkbox>
+              <el-checkbox v-model="item.checked"></el-checkbox>
             </div>
             <div class="margin-left10px">
               <img
@@ -108,7 +130,7 @@
           <div slot="footer" class="dialog-footer">
             <el-row>
               <el-col :span="12">
-                <el-checkbox class="selectAll" v-model="selectAll"
+                <el-checkbox class="selectAll" v-model="allSelected"
                   >全选</el-checkbox
                 >
               </el-col>
@@ -152,6 +174,30 @@ export default {
         },
         {
           orderId: "2",
+          created: "2023-10-1 11:56",
+          claimCode: "00-12",
+          documentType: "word",
+          name: "测试文档2.word",
+          status: "已退款",
+          price: 1.2,
+          printType: "远程下单（到店自取）",
+        },
+      ],
+      downloadList: [
+        {
+          orderId: "1",
+          checked: false,
+          created: "2020-10-1 9:56",
+          claimCode: "00-13",
+          documentType: "pdf",
+          name: "测试文档.pdf",
+          status: "已下载",
+          price: 1.2,
+          printType: "店内打印",
+        },
+        {
+          orderId: "2",
+          checked: true,
           created: "2023-10-1 11:56",
           claimCode: "00-12",
           documentType: "word",
@@ -218,6 +264,20 @@ export default {
         .catch(() => {
           //doSomething()
         });
+    },
+  },
+  computed: {
+    allSelected: {
+      get() {
+        return this.downloadList.every((i) => {
+          return i.checked;
+        });
+      },
+      set(isCheck) {
+        this.downloadList.forEach((t) => {
+          t.checked = isCheck;
+        });
+      },
     },
   },
 };
@@ -304,9 +364,17 @@ export default {
   font-size: 14px;
   font-family: PingFangSC-Regular, PingFang SC;
   font-weight: 400;
-  color: #40db98;
   padding-right: 10px;
 }
+
+.order-status-downloaded {
+  color: #40db98;
+}
+
+.order-status-refund {
+  color: #595959;
+}
+
 .order-detail-info {
   margin-top: 8px;
   color: rgba(89, 89, 89, 1);
