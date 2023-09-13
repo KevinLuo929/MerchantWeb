@@ -39,6 +39,7 @@
 </template>
 
 <script>
+import serviceApi from "@/api/service";
 export default {
   data() {
     return {
@@ -56,6 +57,17 @@ export default {
       ],
     };
   },
+  created() {
+    this.search();
+  },
+  methods:{
+    async search() {
+      let res = serviceApi.getData();
+      if (res.success) {
+        this.tableData = res.data;
+      }
+    },
+  }
 };
 </script>
 

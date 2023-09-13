@@ -83,7 +83,7 @@ export default {
     };
   },
   created() {
-    console.log("created: 页面加载后执行方法");
+    this.search();
     this.tableData = [
       {
         shopId: "112",

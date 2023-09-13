@@ -2,11 +2,11 @@
   <div class="container">
     <div>
       <span class="min-consume-label">门店订单最低消费：</span>
-      <el-input v-model="input" placeholder="请输入价格"></el-input>
+      <el-input v-model="minConsumeValue" placeholder="请输入价格"></el-input>
       <el-switch
         class="margin-left10px"
         v-model="isOpenMinConsume"
-        @change="handleOpenMinConsume"
+        @change="changeOpenMinConsume"
         active-color="#13ce66"
       >
       </el-switch>
@@ -27,64 +27,30 @@
                 class="el-icon-warning-outline margin-left5px"
               ></i> </el-tooltip
           ></span>
-          <div class="item-section">
+          <div
+            v-for="item in documentPrice"
+            :key="item.Id"
+            class="item-section"
+          >
             <div class="file-type">
               <span class="item-title">文件类型</span
-              ><span class="item-value">文档</span>
+              ><span class="item-value">{{ item.documentType }}</span>
             </div>
             <div class="item-container">
               <span class="item-title">纸张尺寸</span
-              ><span class="item-value">A3</span>
+              ><span class="item-value">{{ item.size }}</span>
             </div>
             <div class="item-container">
               <span class="item-title">颜色</span
-              ><span class="item-value">黑白</span>
+              ><span class="item-value">{{ item.color }}</span>
             </div>
             <div class="item-container">
               <span class="item-title">面数</span
-              ><span class="item-value">单面</span>
+              ><span class="item-value">{{ item.printType }}</span>
             </div>
             <div class="item-container">
               <span class="item-title">价格</span
-              ><span class="item-value">¥0.1</span>
-            </div>
-            <div class="operation-section">
-              <span>
-                <el-button
-                  @click="handlePriceSetting"
-                  class="margin-left15px vertical-align-middle"
-                  type="text"
-                  ><img src="../../assets/edit.svg" alt=""
-                /></el-button>
-                <el-button
-                  @click="dialogDelete = true"
-                  class="margin-left10px vertical-align-middle"
-                  type="text"
-                  ><img src="../../assets/trash.svg" alt=""
-                /></el-button>
-              </span>
-            </div>
-          </div>
-          <div class="item-section">
-            <div class="file-type">
-              <span class="item-title">文件类型</span
-              ><span class="item-value">文档</span>
-            </div>
-            <div class="item-container">
-              <span class="item-title">纸张尺寸</span
-              ><span class="item-value">A3</span>
-            </div>
-            <div class="item-container">
-              <span class="item-title">颜色</span
-              ><span class="item-value">黑白</span>
-            </div>
-            <div class="item-container">
-              <span class="item-title">面数</span
-              ><span class="item-value">单面</span>
-            </div>
-            <div class="item-container">
-              <span class="item-title">价格</span
-              ><span class="item-value">¥0.1</span>
+              ><span class="item-value">¥{{ item.price }}</span>
             </div>
             <div class="operation-section">
               <span>
@@ -222,8 +188,8 @@
     >
       <span>是否确认在该门店开启最低金额消费¥0.5</span>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogVisible = false"
+        <el-button @click="handleClose">取 消</el-button>
+        <el-button type="primary" @click="handleSaveOpenMinConsume"
           >确 认</el-button
         >
       </span>
@@ -253,15 +219,15 @@
             </el-checkbox-group>
           </el-form-item>
           <el-form-item label="打印面数：">
-            <el-radio-group v-model="form.count">
-              <el-radio label="线上品牌商赞助"></el-radio>
-              <el-radio label="线下场地免费"></el-radio>
+            <el-radio-group v-model="form.printType">
+              <el-radio label="单面"></el-radio>
+              <el-radio label="双面"></el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="打印颜色：">
             <el-radio-group v-model="form.color">
-              <el-radio label="线上品牌商赞助"></el-radio>
-              <el-radio label="线下场地免费"></el-radio>
+              <el-radio label="黑白"></el-radio>
+              <el-radio label="彩色"></el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="打印单价：">
@@ -283,12 +249,31 @@
 export default {
   data() {
     return {
-      input: "",
+      minConsumeValue: "￥0.5",
       isOpenMinConsume: false,
       activeName: "first",
       dialogVisible: false,
       dialogPriceSettingVisible: false,
+      documentPrice: [
+        {
+          Id: "1",
+          documentType: "文档",
+          size: "A3",
+          color: "黑白",
+          printType: "单面",
+          price: "0.1",
+        },
+        {
+          Id: "2",
+          documentType: "文档",
+          size: "A4",
+          color: "彩色",
+          printType: "双面",
+          price: "0.5",
+        },
+      ],
       form: {
+        Id: "",
         size: "",
         count: "",
         color: "",
@@ -300,20 +285,24 @@ export default {
     handleClick(tab, event) {
       console.log(tab, event);
     },
-    handleOpenMinConsume() {
-      this.dialogVisible = true;
+    changeOpenMinConsume() {
+      if (this.isOpenMinConsume) {
+        this.dialogVisible = true;
+      }
+
       //   this.isOpenMinConsume = !this.isOpenMinConsume;
     },
-
+    handleCancelOpenMinConsume() {
+      debugger;
+      this.dialogVisible = false;
+      this.isOpenMinConsume = false;
+    },
     handlePriceSetting() {
       this.dialogPriceSettingVisible = true;
     },
     handleClose(done) {
-      this.$confirm("确认关闭？")
-        .then((_) => {
-          done();
-        })
-        .catch((_) => {});
+      this.dialogVisible = false;
+      this.isOpenMinConsume = false;
     },
     handlePriceSettingClose(done) {
       this.$confirm("确认关闭？")
@@ -321,6 +310,9 @@ export default {
           done();
         })
         .catch((_) => {});
+    },
+    handleSaveOpenMinConsume() {
+      this.dialogVisible = false;
     },
   },
 };

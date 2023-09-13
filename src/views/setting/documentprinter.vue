@@ -9,7 +9,8 @@
       <el-row>
         <span class="detail-label">新订单语音播报：</span>
         <el-switch
-          v-model="value1"
+          @change="handleBroadcastSwitch"
+          v-model="isBroadcast"
           active-color="#40DB98"
           inactive-color="#F0F0F0"
         >
@@ -18,62 +19,65 @@
           用户新下单文件、自动打印完成后还会进行语音播报通知</span
         >
       </el-row>
-      <div class="detail-item">
+      <div v-for="item in printList" :key="item.Id" class="detail-item">
         <div>
-          <img src="../../assets/large_printer.png" alt="" />
+          <img
+            :src="[
+              item.isEnabled
+                ? require('../../assets/large_printer.png')
+                : require('../../assets/large_printer_disable.png'),
+            ]"
+            alt=""
+          />
         </div>
-        <div class="margin-left10px">
+        <div
+          :class="[
+            item.isEnabled
+              ? 'margin-left10px'
+              : 'margin-left10px disabled-color',
+          ]"
+        >
           <span class="printer-info"
-            >FX ApeosPort-V C333<el-tag class="priority-tag">优先</el-tag></span
+            >{{ item.printerName
+            }}<el-tag v-if="item.isPriority" class="priority-tag"
+              >优先</el-tag
+            ></span
           >
           <span class="printer-parameter"
-            >配置参数：【A3\A4】 【彩色】 【支出双面】</span
+            >配置参数：【{{ item.supportPaperKind }}】 【{{
+              item.supportColor
+            }}】 【{{ item.printerType }}】</span
           >
         </div>
         <div class="operation-section">
           <span>
-            <el-switch v-model="value2" active-color="#40DB98"> </el-switch>
+            <el-switch v-model="item.isEnabled" active-color="#40DB98">
+            </el-switch>
             <el-button
-              @click="dialogVisible = true"
+              :disabled="!item.isEnabled"
+              @click="handleEdit(item)"
               class="margin-left15px vertical-align-middle"
               type="text"
-              ><img src="../../assets/setting.svg" alt=""
+              ><img
+                :src="[
+                  item.isEnabled
+                    ? require('../../assets/setting.png')
+                    : require('../../assets/setting_disable.png'),
+                ]"
+                alt=""
             /></el-button>
             <el-button
-              @click="dialogDelete = true"
+              :disabled="!item.isEnabled"
+              @click="handleDeletePrinter(item.Id)"
               class="margin-left10px vertical-align-middle"
               type="text"
-              ><img src="../../assets/trash.svg" alt=""
-            /></el-button>
-          </span>
-        </div>
-      </div>
-      <div class="detail-item">
-        <div>
-          <img src="../../assets/large_printer_disable.png" alt="" />
-        </div>
-        <div class="margin-left10px">
-          <span class="printer-info"
-            >FX ApeosPort-V C333<el-tag class="priority-tag">优先</el-tag></span
-          >
-          <span class="printer-parameter"
-            >配置参数：【A3\A4】 【彩色】 【支出双面】</span
-          >
-        </div>
-        <div class="operation-section">
-          <span>
-            <el-switch v-model="value2" active-color="#40DB98"> </el-switch>
-            <el-button
-              @click="dialogVisible = true"
-              class="margin-left15px vertical-align-middle"
-              type="text"
-              ><img src="../../assets/setting.svg" alt=""
-            /></el-button>
-            <el-button
-              @click="dialogDelete = true"
-              class="margin-left10px vertical-align-middle"
-              type="text"
-              ><img src="../../assets/trash.svg" alt=""
+              ><img
+                :src="[
+                  item.isEnabled
+                    ? require('../../assets/trash.png')
+                    : require('../../assets/trash_disable.png'),
+                ]"
+                alt=""
             /></el-button>
           </span>
         </div>
@@ -92,25 +96,25 @@
       <el-form ref="form" :model="form" label-width="100px">
         <el-form-item>
           <span slot="label" class="dialog-label">打印机别名：</span>
-          <el-input v-model="form.name"></el-input>
+          <el-input v-model="form.printerName"></el-input>
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">颜色设置：</span>
-          <el-select v-model="form.color" placeholder="">
-            <el-option label="只打黑白" value="heibai"></el-option>
-            <el-option label="彩色" value="caise"></el-option>
+          <el-select v-model="form.supportColor" placeholder="">
+            <el-option label="只打黑白" value="黑白"></el-option>
+            <el-option label="彩色" value="彩色"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">单双面设置：</span>
-          <el-select v-model="form.singleordouble" placeholder="">
-            <el-option label="支持双面" value="shuangmian"></el-option>
-            <el-option label="单面" value="danmian"></el-option>
+          <el-select v-model="form.printerType" placeholder="">
+            <el-option label="支持双面" value="双面"></el-option>
+            <el-option label="单面" value="单面"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
-          <span slot="label" class="dialog-label">单双面设置：</span>
-          <el-checkbox-group v-model="form.checkList">
+          <span slot="label" class="dialog-label">支持纸张：</span>
+          <el-checkbox-group v-model="form.supportPaperKind">
             <div>
               <el-checkbox label="A4" name="A4"></el-checkbox>
               <el-checkbox label="B5" name="B5"></el-checkbox>
@@ -125,7 +129,7 @@
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">出纸优先级：</span>
-          <el-checkbox v-model="form.priority"
+          <el-checkbox v-model="form.isPriority"
             >订单优先使用该机器进行打印</el-checkbox
           >
         </el-form-item>
@@ -133,9 +137,7 @@
 
       <div slot="footer" class="dialog-footer text-align-right">
         <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button class="btn-save" @click="dialogVisible = false"
-          >保 存</el-button
-        >
+        <el-button class="btn-save" @click="onSubmit">保 存</el-button>
       </div>
     </el-dialog>
 
@@ -159,23 +161,51 @@
 </template>
 
 <script>
+import settingApi from "@/api/setting";
 export default {
   data() {
     return {
-      value1: true,
+      isBroadcast: true,
       value2: true,
       dialogVisible: false,
       dialogDelete: false,
       form: {
-        name: "",
-        color: "heibai",
-        singleordouble: "shuangmian",
-        checkList: ["A4", "A5"],
-        priority: true,
+        Id: "",
+        printerName: "",
+        supportColor: "",
+        supportPaperKind: [],
+        printerType: "",
+        isPriority: true,
       },
+      printList: [
+        {
+          Id: "1",
+          printerName: "FX ApeosPort-V C333",
+          isPriority: true,
+          printerType: "双面",
+          supportPaperKind: ["A3", "A4"],
+          supportColor: "彩色",
+          isEnabled: true,
+        },
+        {
+          Id: "2",
+          printerName: "FX ApeosPort-V C330",
+          isPriority: false,
+          printerType: "单面",
+          supportPaperKind: ["A3"],
+          supportColor: "黑白",
+          isEnabled: false,
+        },
+      ],
     };
   },
+  created() {
+    this.search();
+  },
   methods: {
+    async search() {
+      let res = settingApi.getPrinterSettingData().then((res) => {});
+    },
     handleClose(done) {
       this.$confirm("确认关闭？")
         .then((_) => {
@@ -189,6 +219,21 @@ export default {
           done();
         })
         .catch((_) => {});
+    },
+    handleEdit(row) {
+      this.dialogVisible = true;
+      this.form = Object.assign({}, row);
+    },
+    handleDeletePrinter(Id) {
+      this.dialogDelete = true;
+      let res = settingApi.deletePrinter(Id).then((res) => {});
+    },
+    handleBroadcastSwitch() {
+      alert(this.isBroadcast);
+    },
+    onSubmit() {
+      this.dialogVisible = false;
+      let res = settingApi.savePrinterSettings(this.form).then((res) => {});
     },
   },
 };
@@ -322,5 +367,8 @@ export default {
 .btn-save {
   background-color: #40db98;
   color: #ffffff;
+}
+.disabled-color {
+  color: #bfbfbf;
 }
 </style>

@@ -31,6 +31,7 @@
 </template>
 
 <script>
+import managementApi from "@/api/management";
 export default {
   data() {
     return {
@@ -40,7 +41,13 @@ export default {
       },
     };
   },
+  created() {
+    this.search();
+  },
   methods: {
+    async search() {
+      let res = managementApi.getPrinterSettingData().then((res) => {});
+    },
     onSubmit() {
       console.log("submit!");
     },

@@ -60,16 +60,33 @@
       </el-form-item>
 
       <el-form-item>
-        <el-button class="btn-save">保存设置</el-button>
+        <el-button class="btn-save" @click="onSubmit">保存设置</el-button>
       </el-form-item>
+      <el-dialog
+        :visible.sync="dialog"
+        width="20%"
+        center
+        :before-close="handleClose"
+      >
+        <div class="text-align">
+          <span slot="title" class="dialog-title">店主授权微信扫码确认</span>
+          <p class="title">
+            修改门店及收款设置页面信息，均需店主打开授权微信扫描下方二维码确认修改才能成功
+          </p>
+          <div><img src="../../assets/QR_Code_Sample.png" alt="" /></div>
+          <p class="sub-title">请店主打开授权微信扫码确认修改</p>
+        </div>
+      </el-dialog>
     </el-form>
   </div>
 </template>
 
 <script>
+import settingApi from "@/api/setting";
 export default {
   data() {
     return {
+      dialog: false,
       ruleForm: {
         isOpen: "",
         name: "",
@@ -99,25 +116,29 @@ export default {
       },
     };
   },
+  created() {
+    this.search();
+  },
   methods: {
-    submitForm(formName) {
-      this.$refs[formName].validate((valid) => {
-        if (valid) {
-          alert("submit!");
-        } else {
-          console.log("error submit!!");
-          return false;
-        }
-      });
+    async search() {
+      let res = settingApi.getPrinterSettingData().then((res) => {});
     },
-    resetForm(formName) {
-      this.$refs[formName].resetFields();
+    onSubmit() {
+      debugger;
+      this.dialog = true;
+      let res = settingApi.savePrinterSettings(this.form).then((res) => {});
     },
+  },
+  handleClose(done) {
+    done();
   },
 };
 </script>
 
 <style scoped>
+.text-align {
+  text-align: center;
+}
 .width350px {
   width: 350px;
 }
@@ -150,5 +171,22 @@ export default {
   background-color: #40db98;
   color: #ffffff;
   margin-bottom: 20px;
+}
+.title {
+  font-size: 14px;
+  font-family: PingFangSC-Regular, PingFang SC;
+  font-weight: 400;
+  color: #000000;
+}
+.sub-title {
+  font-size: 14px;
+  font-family: PingFangSC-Regular, PingFang SC;
+  font-weight: 400;
+  color: #595959;
+}
+.dialog-title {
+  font-size: 16px;
+  font-family: PingFangSC-Medium, PingFang SC;
+  font-weight: 600;
 }
 </style>

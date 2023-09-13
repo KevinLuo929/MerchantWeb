@@ -62,7 +62,7 @@
 
 <script>
 import * as echarts from "echarts";
-
+import managementApi from "@/api/management";
 export default {
   data() {
     return {
@@ -70,10 +70,16 @@ export default {
       value1: "",
     };
   },
+  created() {
+    this.search();
+  },
   mounted() {
     this.initChart();
   },
   methods: {
+    async search() {
+      let res = managementApi.getPrinterSettingData().then((res) => {});
+    },
     initChart() {
       var chartDom = document.getElementById("echart1");
       var myChart = echarts.init(chartDom);
