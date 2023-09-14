@@ -200,11 +200,14 @@ export default {
     };
   },
   created() {
+    debugger;
     this.search();
   },
   methods: {
     async search() {
-      let res = settingApi.getPrinterSettingData().then((res) => {});
+      let res = settingApi.getPrinterSettingsData().then((res) => {
+        console.log(res);
+      });
     },
     handleClose(done) {
       this.$confirm("确认关闭？")
