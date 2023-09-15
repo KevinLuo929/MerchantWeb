@@ -63,9 +63,9 @@
               <div @click="handlePause" class="operation">
                 <img src="../../assets/pause.png" alt="" />
               </div>
-              <div @click="handleRunning" class="operation">
+              <!-- <div @click="handleRunning" class="operation">
                 <img src="../../assets/running.png" alt="" />
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
@@ -106,6 +106,7 @@ export default {
           printType: "远程下单（到店自取）",
         },
       ],
+      docList: [],
     };
   },
   created() {
@@ -115,18 +116,18 @@ export default {
     async search() {
       let res = printerApi
         .getOrder({
-          pageIndex: 21474836,
+          pageIndex: 1,
           pageSize: 100,
-          shopId: 2147483647,
-          userId: 2147483647,
-          orderStatus: 0,
+          orderStatus: [0],
         })
         .then((res) => {
+          debugger;
           this.totalNumber = res.totalNumber;
-          //this.orderList = res.result;
-          // if (this.totalNumber > 0) {
-          //   this.hasOrder = true;
-          // }
+          if (this.totalNumber > 0) {
+            this.hasOrder = true;
+          }
+          this.orderList = res.result;
+          console.log(this.orderList);
         });
     },
     async handlePause() {

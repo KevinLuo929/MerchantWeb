@@ -8,7 +8,7 @@
         >
         <div class="filter-section">
           <el-input
-            placeholder="查询门店请输入门店ID"
+            placeholder="查询订单请输入取件码数字"
             v-model="input2"
             class="width400px"
           >

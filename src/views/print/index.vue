@@ -46,7 +46,7 @@
               </div>
             </div>
           </div>
-          <div class="reminder-container">
+          <div v-if="showReminder" class="reminder-container">
             <i class="el-icon-warning reminder-icon"></i>
             <span class="reminder-label">搜索不到可用打印机</span>
           </div>
@@ -74,7 +74,8 @@
                 <img src="../../assets/folder_download.png" alt="" />
               </div>
               <div @click="handleFolder" class="operation">
-                <img src="../../assets/folder.png" alt="" />
+                <input type="file" id="file" hidden @change="fileChange" />
+                <img src="../../assets/folder.png" @click="btnChange" alt="" />
               </div>
               <div @click="handleCancel" class="operation">
                 <img src="../../assets/cancel.png" alt="" />
@@ -106,24 +107,25 @@
 
           <div
             v-for="item in downloadList"
-            :key="item.orderId"
+            :key="item.id"
             class="order-detail-section"
           >
             <div class="checkbox">
               <el-checkbox v-model="item.checked"></el-checkbox>
             </div>
             <div class="margin-left10px">
-              <img
-                :src="require('../../assets/' + item.documentType + '.png')"
-                alt=""
-              />
+              <img :src="require('../../assets/word.png')" alt="" />
             </div>
             <div class="order-detail-line">
               <div class="order-detail-name">
-                {{ item.name }}
+                {{ item.fileName }}
               </div>
               <div class="order-detail-info">
-                A4|纵向|黑白|单面|4份|打印[1-12]页
+                {{ item.paperKind }}|{{ item.pageOrientation }}|{{
+                  item.printColor
+                }}|{{ item.printDuplex }}|{{ item.totalPageCount }}份|打印[{{
+                  item.totalPrintPageCount
+                }}]页
               </div>
             </div>
           </div>
@@ -135,7 +137,7 @@
                 >
               </el-col>
               <el-col :span="12">
-                <el-button class="btn-download" @click="dialogDownload = false"
+                <el-button class="btn-download" @click="download()"
                   >下载</el-button
                 >
               </el-col>
@@ -153,9 +155,12 @@
 
 <script>
 import printerApi from "@/api/printer";
+import printerWorld from "@/utils/PrintWorld";
+import { color } from "echarts";
 export default {
   data() {
     return {
+      showReminder: false,
       checked: false,
       selectAll: false,
       dialogDownload: false,
@@ -185,46 +190,57 @@ export default {
       ],
       downloadList: [
         {
-          orderId: "1",
+          id: "1",
           checked: false,
-          created: "2020-10-1 9:56",
-          claimCode: "00-13",
-          documentType: "pdf",
-          name: "测试文档.pdf",
-          status: "已下载",
-          price: 1.2,
-          printType: "店内打印",
+          fileName: "语文考题.pdf",
+          url: "https://bd2.GovSpend.com/aee729528532c1eb80546e5f3183c6e2/5ebb551a95599f0ef1fa9949cdbe6157/RFP-202307163-MCILS-Application-FINAL.docx",
+          paperKind: "A4",
+          pageOrientation: "纵向",
+          printColor: "黑白",
+          printDuplex: "单面",
+          totalPageCount: "4",
+          totalPrintPageCount: "1-12",
+          copies: "",
+          price: "",
+          filePrintStatus: "",
+          printPages: "",
+          printShopId: "",
         },
         {
-          orderId: "2",
-          checked: true,
-          created: "2023-10-1 11:56",
-          claimCode: "00-12",
-          documentType: "word",
-          name: "测试文档2.word",
-          status: "已退款",
-          price: 1.2,
-          printType: "远程下单（到店自取）",
+          id: "2",
+          checked: false,
+          fileName: "数学考题.pdf",
+          url: "https://bd2.GovSpend.com/5256780a73d614b99102867054573ddc/ae3e84aa558a07922804e28c378b1f91/SDP_Plan_Form-as-of-Feb-20225.xlsx",
+          paperKind: "A4",
+          pageOrientation: "纵向",
+          printColor: "黑白",
+          printDuplex: "单面",
+          totalPageCount: "4",
+          totalPrintPageCount: "1-12",
+          copies: "",
+          price: "",
+          filePrintStatus: "",
+          printPages: "",
+          printShopId: "",
         },
       ],
     };
   },
   created() {
+    //printWorld = GetPrintWorld();
     this.search();
   },
   methods: {
     async search() {
       let res = printerApi
         .getOrder({
-          pageIndex: 21474836,
+          pageIndex: 1,
           pageSize: 100,
-          shopId: 2147483647,
-          userId: 2147483647,
-          orderStatus: 0,
+          orderStatus: [0],
         })
         .then((res) => {
           this.totalNumber = res.totalNumber;
-          //this.orderList = res.result;
+          this.orderList = res.result;
           // if (this.totalNumber > 0) {
           //   this.hasOrder = true;
           // }
@@ -259,11 +275,100 @@ export default {
         type: "warning",
       })
         .then(() => {
-          //doSomething()
+          alert("确 认");
         })
         .catch(() => {
           //doSomething()
         });
+    },
+    download() {
+      this.downloadList.forEach((d) => {
+        debugger;
+        if (d.checked) {
+          var elemIF = document.createElement("iframe");
+          elemIF.src = d.url;
+          elemIF.style.display = "none";
+          document.body.appendChild(elemIF);
+        }
+      });
+      this.dialogDownload = false;
+    },
+    fileChange(e) {
+      try {
+        debugger;
+        const file = document.getElementById("file");
+        if (file == null) return;
+        console.log(file.files[0].path);
+      } catch (error) {
+        console.debug("choice file err:", error);
+      }
+    },
+    btnChange() {
+      var file = document.getElementById("file");
+      file.click();
+    },
+    // 获取打印机列表
+    getPrintList() {
+      // const json = {
+      //   action: "printers",
+      //   refresh: true,
+      //   defaultprn: true,
+      // };
+      printWorld.CallbackOnPrinterList((list) => {
+        this.printList = list.val;
+        // console.log(this.printList)
+        this.printList.forEach((item) => {
+          if (item.default) {
+            this.form.printer = item.name;
+          }
+        });
+      });
+      //printWorld.Act(json);
+    },
+    // 打印
+    print() {
+      console.log("打印", this.form);
+      if (this.form.content == "") {
+        alert("请输入链接");
+        return;
+      }
+      printWorld.Act(this.form);
+    },
+    // 预览
+    preview() {
+      const json = { ...this.form, action: "previewfile" };
+      console.log("预览", this.form, json);
+      if (this.form.content == "") {
+        alert("请输入链接");
+        return;
+      }
+      printWorld.Act(json);
+    },
+    // 获取文件页数代码，如下，请参考：
+    FilePages() {
+      startTime = new Date().getTime();
+      var json = {};
+      json.action = "filepages";
+      json.format = "pdf_url";
+      // json.content = "https://img.bazhuay.com/1690791455125.docx?doc-convert/preview";
+      // json.content = "https://www.webprintworld.com/download/master.pdf";
+      // json.content = "https://img.bazhuay.com/1691640429623_903.pdf";
+      json.content = "https://img.bazhuay.com/1691717961600_12.pdf";
+
+      console.log("json", json);
+      printWorld.CallbackOnFilePages(this.Callback4FilePages);
+      if (!printWorld.Act(json)) {
+        alert(printWorld.GetLastError());
+      }
+    },
+    Callback4FilePages(json) {
+      console.log("time=", new Date().getTime() - startTime);
+      console.log("printWorld.Callback4FilePages", json);
+      if (json.error == undefined) {
+        // alert(json.val); //json.val，页数
+      } else {
+        alert(json.error);
+      }
     },
   },
   computed: {
