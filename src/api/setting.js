@@ -13,4 +13,17 @@ export default {
   async deletePrinterSettings(params) {
     return await http.delete("/api/PrintShop/PrinterSettings", params);
   },
+
+  async getPrintPriceSettings() {
+    return await http.get("/api/PrintShop/PrintPriceSettings");
+  },
+  async addPrintPriceSettings() {
+    return await http.post("/api/PrintShop/PrintPriceSettings");
+  },
+  async updatePrintPriceSettings() {
+    return await http.put("/api/PrintShop/PrintPriceSettings");
+  },
+  async deletePrintPriceSettings(params) {
+    return await http.delete("/api/PrintShop/PrintPriceSettings", params);
+  },
 };

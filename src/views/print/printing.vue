@@ -99,15 +99,14 @@ export default {
     };
   },
   created() {
-    printWorld = GetPrintWorld();
     this.search();
-    debugger;
-    this.downloadFile();
-    this.getPrintList();
-    this.FilePages();
+
+    // printWorld = GetPrintWorld();
+    // this.getPrintList();
+    // this.FilePages();
   },
   methods: {
-    async search() {
+    search() {
       printerApi
         .getOrder({
           pageIndex: 1,
@@ -121,10 +120,10 @@ export default {
             this.hasOrder = true;
           }
           this.orderList = res.result;
-          console.log(this.orderList);
+          this.downloadFile();
         });
     },
-    async handlePause() {
+    handlePause() {
       console.log("handlePause");
     },
     async handleRunning() {
@@ -133,16 +132,26 @@ export default {
     downloadFile() {
       this.orderList.forEach((d) => {
         d.printDocModels.forEach((m) => {
-          debugger;
           var elemIF = document.createElement("iframe");
           elemIF.src = m.url;
           elemIF.style.display = "none";
           document.body.appendChild(elemIF);
         });
+        updateOrderStatus(
+          this.orderList
+            .filter((f) => {
+              return f.orderId == d.orderId;
+            })
+            .map((m) => ({
+              orderId: m.orderId,
+              orderStatus: 3,
+              printDocs: m.printDocModels,
+            }))
+        );
       });
     },
-    updateOrderStatus() {
-      printerApi.updateOrderStatus({}).then((res) => {});
+    updateOrderStatus(params) {
+      printerApi.updateOrderStatus(params).then((res) => {});
     },
     // 获取打印机列表
     getPrintList() {

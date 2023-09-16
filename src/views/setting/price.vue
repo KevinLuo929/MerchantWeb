@@ -28,25 +28,29 @@
               ></i> </el-tooltip
           ></span>
           <div
-            v-for="item in documentPrice"
-            :key="item.Id"
+            v-for="item in documentPriceList"
+            :key="item.id"
             class="item-section"
           >
             <div class="file-type">
               <span class="item-title">文件类型</span
-              ><span class="item-value">{{ item.documentType }}</span>
+              ><span class="item-value">{{ item.printerType }}</span>
             </div>
             <div class="item-container">
               <span class="item-title">纸张尺寸</span
-              ><span class="item-value">{{ item.size }}</span>
+              ><span class="item-value">{{
+                enums.PaperKind[item.paperKind]
+              }}</span>
             </div>
             <div class="item-container">
               <span class="item-title">颜色</span
-              ><span class="item-value">{{ item.color }}</span>
+              ><span class="item-value">{{ enums.PageColor[item.color] }}</span>
             </div>
             <div class="item-container">
               <span class="item-title">面数</span
-              ><span class="item-value">{{ item.printType }}</span>
+              ><span class="item-value">{{
+                enums.PageDuplex[item.duplex]
+              }}</span>
             </div>
             <div class="item-container">
               <span class="item-title">价格</span
@@ -87,44 +91,6 @@
                 class="el-icon-warning-outline margin-left5px"
               ></i> </el-tooltip
           ></span>
-          <div class="item-section">
-            <div class="file-type">
-              <span class="item-title">证件照</span
-              ><span class="item-value">价格</span>
-            </div>
-            <div class="margin-left30px item-container">
-              <span class="item-title">仅冲印</span
-              ><span class="item-value">¥10.0</span>
-            </div>
-            <div class="margin-left30px item-container">
-              <span class="item-title">换底冲印</span
-              ><span class="item-value">¥10.0</span>
-            </div>
-            <div class="margin-left30px item-container">
-              <span class="item-title">美颜换底</span
-              ><span class="item-value">¥10.0</span>
-            </div>
-            <div class="margin-left30px item-container">
-              <span class="item-title">换装冲印</span
-              ><span class="item-value">¥15.0</span>
-            </div>
-            <div class="operation-section">
-              <span>
-                <el-button
-                  @click="handlePriceSetting"
-                  class="margin-left15px vertical-align-middle"
-                  type="text"
-                  ><img src="../../assets/edit.svg" alt=""
-                /></el-button>
-                <el-button
-                  @click="dialogDelete = true"
-                  class="margin-left10px vertical-align-middle"
-                  type="text"
-                  ><img src="../../assets/trash.svg" alt=""
-                /></el-button>
-              </span>
-            </div>
-          </div>
           <div class="item-section">
             <div class="file-type">
               <span class="item-title">证件照</span
@@ -246,32 +212,18 @@
 </template>
 
 <script>
+import settingApi from "@/api/setting";
+import { enums } from "@/utils/common";
 export default {
   data() {
     return {
+      enums: enums,
       minConsumeValue: "￥0.5",
       isOpenMinConsume: false,
       activeName: "first",
       dialogVisible: false,
       dialogPriceSettingVisible: false,
-      documentPrice: [
-        {
-          Id: "1",
-          documentType: "文档",
-          size: "A3",
-          color: "黑白",
-          printType: "单面",
-          price: "0.1",
-        },
-        {
-          Id: "2",
-          documentType: "文档",
-          size: "A4",
-          color: "彩色",
-          printType: "双面",
-          price: "0.5",
-        },
-      ],
+      documentPriceList: [],
       form: {
         Id: "",
         size: "",
@@ -281,7 +233,15 @@ export default {
       },
     };
   },
+  created() {
+    this.search();
+  },
   methods: {
+    search() {
+      settingApi.getPrintPriceSettings().then((res) => {
+        this.documentPriceList = res;
+      });
+    },
     handleClick(tab, event) {
       console.log(tab, event);
     },
@@ -397,6 +357,7 @@ export default {
 .item-container {
   text-align: center;
   margin-left: 48px;
+  width: 60px;
 }
 .operation-section {
   text-align: right;
