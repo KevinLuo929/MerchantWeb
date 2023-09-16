@@ -6,66 +6,71 @@
       <i class="el-icon-refresh-right float-right"></i>
     </div>
     <div v-show="hasOrder">
-      <div
-        v-for="item in orderList"
-        :key="item.orderId"
-        class="order-info-section"
-      >
-        <div class="border-bottom">
-          <div class="order-info-date">
-            <span>{{ item.created }}</span>
-            <span class="order-code-label"
-              >取件码：<span class="order-code">{{
-                item.claimCode
-              }}</span></span
-            >
-          </div>
-        </div>
-        <div>
-          <div class="order-detail-section">
-            <div>
-              <img
-                :src="require('../../assets/' + item.documentType + '.png')"
-                alt=""
-              />
-            </div>
-            <div class="order-detail-line">
-              <div class="order-detail-name">
-                {{ item.name }}
-                <span class="order-status">{{ item.status }}</span>
-              </div>
-              <div class="order-detail-info">
-                A4|纵向|黑白|单面|4份|打印[1-12]页
-              </div>
+      <div v-for="item in orderList" :key="item.orderId">
+        <div
+          v-for="docItem in item.printDocModels"
+          :key="docItem.id"
+          class="order-info-section"
+        >
+          <div class="border-bottom">
+            <div class="order-info-date">
+              <span>{{
+                moment(item.createTime).format("YYYY-MM-DD HH:mm")
+              }}</span>
+              <span class="order-code-label"
+                >取件码：<span class="order-code">{{
+                  item.takeNumber
+                }}</span></span
+              >
             </div>
           </div>
-          <div class="reminder-container">
-            <i class="el-icon-warning reminder-icon"></i>
-            <span class="reminder-label">黑白6号机正在打印中...</span>
-          </div>
-        </div>
-        <div class="order-footer">
-          <div class="display-flex">
-            <div>
-              <img
-                class="vertical-align-bottom"
-                src="../../assets/wechatpay.svg"
-                alt=""
-              /><span class="order-price">¥{{ item.price }}</span>
-              <img
-                class="vertical-align-bottom margin-left15px"
-                src="../../assets/shop.svg"
-                alt=""
-              />
-              <span class="printer-type">{{ item.printType }}</span>
-            </div>
-            <div class="operation-container">
-              <div @click="handlePause" class="operation">
-                <img src="../../assets/pause.png" alt="" />
+          <div>
+            <div class="order-detail-section">
+              <div>
+                <img :src="require('../../assets/word.png')" alt="" />
               </div>
-              <!-- <div @click="handleRunning" class="operation">
+              <div class="order-detail-line">
+                <div class="order-detail-name">
+                  {{ docItem.fileName }}
+                  <span class="order-status">{{ item.status }}</span>
+                </div>
+                <div class="order-detail-info">
+                  {{ enums.PaperKind[docItem.paperKind] }}|{{
+                    enums.PageOrientation[docItem.pageOrientation]
+                  }}|{{ enums.PageColor[docItem.printColor] }}|{{
+                    enums.PageDuplex[docItem.printDuplex]
+                  }}|{{ docItem.copies }}份|打印[{{ docItem.printPages }}]页
+                </div>
+              </div>
+            </div>
+            <div class="reminder-container">
+              <i class="el-icon-warning reminder-icon"></i>
+              <span class="reminder-label">黑白6号机正在打印中...</span>
+            </div>
+          </div>
+          <div class="order-footer">
+            <div class="display-flex">
+              <div>
+                <img
+                  class="vertical-align-bottom"
+                  src="../../assets/wechatpay.svg"
+                  alt=""
+                /><span class="order-price">¥{{ docItem.price }}</span>
+                <img
+                  class="vertical-align-bottom margin-left15px"
+                  src="../../assets/shop.svg"
+                  alt=""
+                />
+                <span class="printer-type"></span>
+              </div>
+              <div class="operation-container">
+                <div @click="handlePause" class="operation">
+                  <img src="../../assets/pause.png" alt="" />
+                </div>
+                <!-- <div @click="handleRunning" class="operation">
                 <img src="../../assets/running.png" alt="" />
               </div> -->
+              </div>
             </div>
           </div>
         </div>
@@ -76,45 +81,34 @@
   
   <script>
 import printerApi from "@/api/printer";
+import moment from "moment";
+import { enums } from "@/utils/common";
+let printWorld;
+let startTime;
 export default {
   data() {
     return {
+      enums: enums,
       checked: false,
       selectAll: false,
       dialogDownload: false,
       hasOrder: true,
       totalNumber: 0,
-      orderList: [
-        {
-          orderId: "1",
-          created: "2020-10-1 9:56",
-          claimCode: "00-13",
-          documentType: "pdf",
-          name: "测试文档.pdf",
-          status: "已下载",
-          price: 1.2,
-          printType: "店内打印",
-        },
-        {
-          orderId: "2",
-          created: "2023-10-1 11:56",
-          claimCode: "00-12",
-          documentType: "word",
-          name: "测试文档2.word",
-          status: "已退款",
-          price: 1.2,
-          printType: "远程下单（到店自取）",
-        },
-      ],
-      docList: [],
+      orderList: [],
+      moment,
     };
   },
   created() {
+    printWorld = GetPrintWorld();
     this.search();
+    debugger;
+    this.downloadFile();
+    this.getPrintList();
+    this.FilePages();
   },
   methods: {
     async search() {
-      let res = printerApi
+      printerApi
         .getOrder({
           pageIndex: 1,
           pageSize: 100,
@@ -135,6 +129,83 @@ export default {
     },
     async handleRunning() {
       this.dialogDownload = true;
+    },
+    downloadFile() {
+      this.orderList.forEach((d) => {
+        d.printDocModels.forEach((m) => {
+          debugger;
+          var elemIF = document.createElement("iframe");
+          elemIF.src = m.url;
+          elemIF.style.display = "none";
+          document.body.appendChild(elemIF);
+        });
+      });
+    },
+    updateOrderStatus() {
+      printerApi.updateOrderStatus({}).then((res) => {});
+    },
+    // 获取打印机列表
+    getPrintList() {
+      const json = {
+        action: "printers",
+        refresh: true,
+        defaultprn: true,
+      };
+      printWorld.CallbackOnPrinterList((list) => {
+        this.printList = list.val;
+        // console.log(this.printList)
+        this.printList.forEach((item) => {
+          if (item.default) {
+            this.form.printer = item.name;
+          }
+        });
+      });
+      printWorld.Act(json);
+    },
+    // 打印
+    print() {
+      console.log("打印", this.form);
+      if (this.form.content == "") {
+        alert("请输入链接");
+        return;
+      }
+      printWorld.Act(this.form);
+    },
+    // 预览
+    preview() {
+      const json = { ...this.form, action: "previewfile" };
+      console.log("预览", this.form, json);
+      if (this.form.content == "") {
+        alert("请输入链接");
+        return;
+      }
+      printWorld.Act(json);
+    },
+    // 获取文件页数代码，如下，请参考：
+    FilePages() {
+      startTime = new Date().getTime();
+      var json = {};
+      json.action = "filepages";
+      json.format = "pdf_url";
+      // json.content = "https://img.bazhuay.com/1690791455125.docx?doc-convert/preview";
+      // json.content = "https://www.webprintworld.com/download/master.pdf";
+      // json.content = "https://img.bazhuay.com/1691640429623_903.pdf";
+      json.content = "https://img.bazhuay.com/1691717961600_12.pdf";
+
+      console.log("json", json);
+      printWorld.CallbackOnFilePages(this.Callback4FilePages);
+      if (!printWorld.Act(json)) {
+        alert(printWorld.GetLastError());
+      }
+    },
+    Callback4FilePages(json) {
+      console.log("time=", new Date().getTime() - startTime);
+      console.log("printWorld.Callback4FilePages", json);
+      if (json.error == undefined) {
+        // alert(json.val); //json.val，页数
+      } else {
+        alert(json.error);
+      }
     },
   },
 };
