@@ -27,63 +27,69 @@
       </el-row>
     </div>
     <div v-show="hasOrder">
-      <div
-        v-for="item in orderList"
-        :key="item.orderId"
-        class="order-info-section"
-      >
-        <div class="border-bottom">
-          <div class="order-info-date">
-            <span>{{ item.created }}</span>
-            <span class="order-code-label"
-              >取件码：<span class="order-code">{{
-                item.claimCode
-              }}</span></span
-            >
-          </div>
-        </div>
-        <div>
-          <div class="order-detail-section">
-            <div>
-              <img
-                :src="require('../../assets/' + item.documentType + '.png')"
-                alt=""
-              />
-            </div>
-            <div class="order-detail-line">
-              <div class="order-detail-name">
-                {{ item.name }}
-              </div>
-              <div class="order-detail-info">
-                A4|纵向|黑白|单面|4份|打印[1-12]页
-              </div>
+      <div v-for="item in orderList" :key="item.orderId">
+        <div
+          v-for="docItem in item.printDocModels"
+          :key="docItem.id"
+          class="order-info-section"
+        >
+          <div class="border-bottom">
+            <div class="order-info-date">
+              <span>{{
+                moment(item.createTime).format("YYYY-MM-DD HH:mm")
+              }}</span>
+              <span class="order-code-label"
+                >取件码：<span class="order-code">{{
+                  item.takeNumber
+                }}</span></span
+              >
             </div>
           </div>
-        </div>
-        <div class="order-footer">
-          <div class="display-flex">
-            <div>
-              <img
-                class="vertical-align-bottom"
-                src="../../assets/wechatpay.svg"
-                alt=""
-              /><span class="order-price">¥{{ item.price }}</span>
-              <img
-                class="vertical-align-bottom margin-left15px"
-                src="../../assets/shop.svg"
-                alt=""
-              />
-              <span class="printer-type">{{ item.printType }}</span>
+          <div>
+            <div class="order-detail-section">
+              <div>
+                <img :src="require('../../assets/word.png')" alt="" />
+              </div>
+              <div class="order-detail-line">
+                <div class="order-detail-name">
+                  {{ docItem.fileName }}
+                  <span class="order-status">{{ item.status }}</span>
+                </div>
+                <div class="order-detail-info">
+                  {{ enums.PaperKind[docItem.paperKind] }}|{{
+                    enums.PageOrientation[docItem.pageOrientation]
+                  }}|{{ enums.PageColor[docItem.printColor] }}|{{
+                    enums.PageDuplex[docItem.printDuplex]
+                  }}|{{ docItem.copies }}份|打印[{{ docItem.printPages }}]页
+                </div>
+              </div>
             </div>
-            <div class="operation-container">
-              <div @click="handlePrint" class="operation">
-                <img src="../../assets/printer.png" alt="" />
+          </div>
+          <div class="order-footer">
+            <div class="display-flex">
+              <div>
+                <img
+                  class="vertical-align-bottom"
+                  src="../../assets/wechatpay.svg"
+                  alt=""
+                /><span class="order-price">¥{{ docItem.price }}</span>
+                <img
+                  class="vertical-align-bottom margin-left15px"
+                  src="../../assets/shop.svg"
+                  alt=""
+                />
+                <span class="printer-type"></span>
               </div>
-              <div @click="handleDownload" class="operation">
-                <img src="../../assets/folder_download.png" alt="" />
-              </div>
-              <div @click="handleFolder" class="operation">
-                <img src="../../assets/folder.png" alt="" />
+              <div class="operation-container">
+                <div @click="handlePrint" class="operation">
+                  <img src="../../assets/printer.png" alt="" />
+                </div>
+                <div @click="handleDownload" class="operation">
+                  <img src="../../assets/folder_download.png" alt="" />
+                </div>
+                <div @click="handleFolder" class="operation">
+                  <img src="../../assets/folder.png" alt="" />
+                </div>
               </div>
             </div>
           </div>
@@ -95,36 +101,19 @@
     
     <script>
 import printerApi from "@/api/printer";
+import moment from "moment";
+import { enums } from "@/utils/common";
 export default {
   data() {
     return {
+      enums: enums,
       checked: false,
       selectAll: false,
       dialogDownload: false,
       hasOrder: true,
       totalNumber: 0,
-      orderList: [
-        {
-          orderId: "1",
-          created: "2020-10-1 9:56",
-          claimCode: "00-13",
-          documentType: "pdf",
-          name: "测试文档.pdf",
-          status: "已下载",
-          price: 1.2,
-          printType: "店内打印",
-        },
-        {
-          orderId: "2",
-          created: "2023-10-1 11:56",
-          claimCode: "00-12",
-          documentType: "word",
-          name: "测试文档2.word",
-          status: "已退款",
-          price: 1.2,
-          printType: "远程下单（到店自取）",
-        },
-      ],
+      orderList: [],
+      moment,
     };
   },
   created() {
@@ -134,18 +123,16 @@ export default {
     async search() {
       let res = printerApi
         .getOrder({
-          pageIndex: 21474836,
+          pageIndex: 1,
           pageSize: 100,
-          shopId: 2147483647,
-          userId: 2147483647,
-          orderStatus: 0,
+          orderStatus: [5],
         })
         .then((res) => {
           this.totalNumber = res.totalNumber;
-          //this.orderList = res.result;
-          // if (this.totalNumber > 0) {
-          //   this.hasOrder = true;
-          // }
+          if (this.totalNumber > 0) {
+            this.hasOrder = true;
+          }
+          this.orderList = res.result;
         });
     },
     async handlePrint() {

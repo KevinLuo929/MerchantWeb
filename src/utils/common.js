@@ -1,10 +1,19 @@
 const enums = {
+  OrderStatus: {
+    0: "待支付",
+    1: "等待处理",
+    2: "下载文件中",
+    3: "等待打印",
+    4: "正在打印",
+    5: "打印成功",
+    6: "打印失败",
+  },
   FilePrintStatus: {
     0: "None",
     1: "Waiting",
     2: "Printing",
     3: "Done",
-    5: "Error",
+    4: "Error",
   },
   PageOrientation: {
     0: "未知纸张方向",
