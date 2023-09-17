@@ -13,7 +13,10 @@
             class="width400px"
           >
             <template slot="append"
-              ><el-button class="padding-left5px" type="text"
+              ><el-button
+                @click="handleSearch"
+                class="padding-left5px"
+                type="text"
                 >搜索</el-button
               ></template
             >
@@ -96,6 +99,10 @@
         </div>
       </div>
     </div>
+    <div v-show="!hasOrder" class="no-order-section">
+      <div><img src="../../assets/print_big.png" alt="" /></div>
+      <div class="no-order-text">暂时没有订单哦~</div>
+    </div>
   </div>
 </template>
     
@@ -110,7 +117,7 @@ export default {
       checked: false,
       selectAll: false,
       dialogDownload: false,
-      hasOrder: true,
+      hasOrder: false,
       totalNumber: 0,
       orderList: [],
       moment,
@@ -128,12 +135,23 @@ export default {
           orderStatus: [5],
         })
         .then((res) => {
+          debugger;
           this.totalNumber = res.totalNumber;
           if (this.totalNumber > 0) {
             this.hasOrder = true;
           }
           this.orderList = res.result;
         });
+    },
+    async handleSearch() {
+      printerApi.getOrderByTakeNumber().then((res) => {
+        debugger;
+        this.totalNumber = res.totalNumber;
+        if (this.totalNumber > 0) {
+          this.hasOrder = true;
+        }
+        this.orderList = res.result;
+      });
     },
     async handlePrint() {
       console.log("handlePrint");
