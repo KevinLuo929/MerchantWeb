@@ -8,7 +8,7 @@
       class="demo-ruleForm"
     >
       <el-form-item label="门店打烊" prop="isOpen">
-        <el-switch v-model="ruleForm.isOpen"></el-switch>
+        <el-switch v-model="isOpen"></el-switch>
         <div class="spec">
           开启后顾客将无法正常下单打印，用于有事闭店/暂不营业等用途
         </div>
@@ -22,36 +22,36 @@
           placeholder="输入店铺地址"
         ></el-input>
       </el-form-item>
-      <el-form-item label="联系电话：" prop="phone">
+      <el-form-item label="联系电话：" prop="contactPhone">
         <el-input
-          v-model="ruleForm.phone"
+          v-model="ruleForm.contactPhone"
           placeholder="输入电话号码"
         ></el-input>
         <div class="spec">用户可在订单页查看并联系门店</div>
       </el-form-item>
 
-      <el-form-item label="编辑公告：" prop="announcement">
+      <el-form-item label="编辑公告：" prop="notice">
         <el-input
           class="width350px"
           type="textarea"
           rows="3"
-          v-model="ruleForm.announcement"
+          v-model="ruleForm.notice"
           placeholder="显示在门店小程序首页的滚动公告"
         ></el-input>
       </el-form-item>
       <div class="label">商户收款设置</div>
-      <el-form-item label="支付宝姓名：" prop="aliPayName">
+      <el-form-item label="支付宝姓名：" prop="contact">
         <el-input
-          v-model="ruleForm.aliPayName"
+          v-model="ruleForm.contact"
           placeholder="输入真实姓名"
         ></el-input>
         <div class="spec">
           请填写支付宝账号实名认证时的真实姓名，确保您收款成功
         </div>
       </el-form-item>
-      <el-form-item label="支付宝账号：" prop="aliPayAccount">
+      <el-form-item label="支付宝账号：" prop="aliPayId">
         <el-input
-          v-model="ruleForm.aliPayAccount"
+          v-model="ruleForm.aliPayId"
           placeholder="输入真实账号"
         ></el-input>
         <div class="spec">
@@ -62,12 +62,7 @@
       <el-form-item>
         <el-button class="btn-save" @click="onSubmit">保存设置</el-button>
       </el-form-item>
-      <el-dialog
-        :visible.sync="dialog"
-        width="20%"
-        center
-        :before-close="handleClose"
-      >
+      <el-dialog :visible.sync="dialog" width="20%" center>
         <div class="text-align">
           <span slot="title" class="dialog-title">店主授权微信扫码确认</span>
           <p class="title">
@@ -87,30 +82,33 @@ export default {
   data() {
     return {
       dialog: false,
+      isOpen: false,
       ruleForm: {
-        isOpen: "",
+        id: "1",
         name: "",
         address: "",
-        phone: "",
-        announcement: "",
-        aliPayName: "",
-        aliPayAccount: "",
+        contact: "",
+        contactPhone: "",
+        notice: "",
+        wechatId: "",
+        wechatPayId: "",
+        aliPayId: "",
       },
       rules: {
         name: [{ required: true, message: "输入店铺名称", trigger: "blur" }],
         address: [{ required: true, message: "输入店铺地址", trigger: "blur" }],
-        phone: [{ required: true, message: "输入电话号码", trigger: "blur" }],
-        announcement: [
+        contactPhone: [
+          { required: true, message: "输入电话号码", trigger: "blur" },
+        ],
+        notice: [
           {
             required: true,
             message: "显示在门店小程序首页的滚动公告",
             trigger: "blur",
           },
         ],
-        aliPayName: [
-          { required: true, message: "输入真实姓名", trigger: "blur" },
-        ],
-        aliPayAccount: [
+        contact: [{ required: true, message: "输入真实姓名", trigger: "blur" }],
+        aliPayId: [
           { required: true, message: "输入真实账号", trigger: "blur" },
         ],
       },
@@ -121,12 +119,20 @@ export default {
   },
   methods: {
     async search() {
-      let res = settingApi.getPrinterSettingData().then((res) => {});
+      let res = settingApi.getPrintShop().then((res) => {
+        this.ruleForm = res;
+      });
     },
     onSubmit() {
       debugger;
-      this.dialog = true;
-      let res = settingApi.savePrinterSettings(this.form).then((res) => {});
+      //this.dialog = true;
+      let res = settingApi.updatePrintShop(this.ruleForm).then((res) => {
+        this.$message({
+          message: "保存成功",
+          type: "success",
+        });
+        this.search();
+      });
     },
   },
   handleClose(done) {

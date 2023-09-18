@@ -59,13 +59,13 @@
             <div class="operation-section">
               <span>
                 <el-button
-                  @click="handlePriceSetting"
+                  @click="handleUpdPriceSetting(item)"
                   class="margin-left15px vertical-align-middle"
                   type="text"
                   ><img src="../../assets/edit.svg" alt=""
                 /></el-button>
                 <el-button
-                  @click="dialogDelete = true"
+                  @click="handleDeletePriceSetting(item.id)"
                   class="margin-left10px vertical-align-middle"
                   type="text"
                   ><img src="../../assets/trash.svg" alt=""
@@ -74,7 +74,9 @@
             </div>
           </div>
           <div class="text-align-center margin-top40px">
-            <el-button class="btn-add-price">添加价格</el-button>
+            <el-button class="btn-add-price" @click="handleAddPriceSetting"
+              >添加价格</el-button
+            >
           </div>
         </el-tab-pane>
         <el-tab-pane label="证照打印价格设置" name="second">
@@ -115,7 +117,7 @@
             <div class="operation-section">
               <span>
                 <el-button
-                  @click="handlePriceSetting"
+                  @click="handleUpdPriceSetting"
                   class="margin-left15px vertical-align-middle"
                   type="text"
                   ><img src="../../assets/edit.svg" alt=""
@@ -150,7 +152,6 @@
       :visible.sync="dialogVisible"
       width="30%"
       center
-      :before-close="handleClose"
     >
       <span>是否确认在该门店开启最低金额消费¥0.5</span>
       <span slot="footer" class="dialog-footer">
@@ -160,40 +161,24 @@
         >
       </span>
     </el-dialog>
-    <el-dialog
-      :visible.sync="dialogPriceSettingVisible"
-      width="30%"
-      center
-      :before-close="handlePriceSettingClose"
-    >
+    <el-dialog :visible.sync="dialogPriceSettingVisible" width="30%" center>
       <span slot="title" class="charge-price">打印单价设置</span>
       <div>
         <el-form ref="form" :model="form" label-width="100px">
           <el-form-item label="纸张尺寸：">
-            <el-checkbox-group v-model="form.size">
-              <el-row>
-                <el-checkbox label="A4" name="A4"></el-checkbox>
-                <el-checkbox label="B5" name="B5"></el-checkbox>
-                <el-checkbox label="A5" name="A5"></el-checkbox>
-                <el-checkbox label="16K" name="16K"></el-checkbox>
-              </el-row>
-              <el-row>
-                <el-checkbox label="A3" name="A3"></el-checkbox>
-                <el-checkbox label="B4" name="B4"></el-checkbox>
-                <el-checkbox label="8K" name="8K"></el-checkbox>
-              </el-row>
-            </el-checkbox-group>
+            <el-checkbox v-model="form.paperKind">A4</el-checkbox>
           </el-form-item>
           <el-form-item label="打印面数：">
-            <el-radio-group v-model="form.printType">
-              <el-radio label="单面"></el-radio>
-              <el-radio label="双面"></el-radio>
+            <el-radio-group v-model="form.duplex">
+              <el-radio :label="1">单面</el-radio>
+              <el-radio :label="2">长边双面</el-radio>
+              <el-radio :label="3">短边双面</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="打印颜色：">
             <el-radio-group v-model="form.color">
-              <el-radio label="黑白"></el-radio>
-              <el-radio label="彩色"></el-radio>
+              <el-radio :label="0">黑白</el-radio>
+              <el-radio :label="1">彩色</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="打印单价：">
@@ -203,7 +188,7 @@
       </div>
       <div slot="footer" class="dialog-footer text-align-right">
         <el-button @click="dialogPriceSettingVisible = false">取 消</el-button>
-        <el-button class="btn-save" @click="dialogPriceSettingVisible = false"
+        <el-button class="btn-save" @click="handleSavePriceSetting"
           >保 存</el-button
         >
       </div>
@@ -217,6 +202,7 @@ import { enums } from "@/utils/common";
 export default {
   data() {
     return {
+      isAdd: "",
       enums: enums,
       minConsumeValue: "￥0.5",
       isOpenMinConsume: false,
@@ -225,10 +211,10 @@ export default {
       dialogPriceSettingVisible: false,
       documentPriceList: [],
       form: {
-        Id: "",
-        size: "",
-        count: "",
+        id: "",
+        paperKind: "",
         color: "",
+        duplex: "",
         price: "",
       },
     };
@@ -249,30 +235,79 @@ export default {
       if (this.isOpenMinConsume) {
         this.dialogVisible = true;
       }
-
       //   this.isOpenMinConsume = !this.isOpenMinConsume;
     },
     handleCancelOpenMinConsume() {
-      debugger;
       this.dialogVisible = false;
       this.isOpenMinConsume = false;
     },
-    handlePriceSetting() {
+    handleAddPriceSetting() {
+      this.isAdd = true;
+      this.form = {};
       this.dialogPriceSettingVisible = true;
+    },
+    handleUpdPriceSetting(row) {
+      this.isAdd = false;
+      this.dialogPriceSettingVisible = true;
+      this.form = Object.assign({}, row);
+      if (this.form.paperKind == "9") {
+        this.form.paperKind = true;
+      }
     },
     handleClose(done) {
       this.dialogVisible = false;
       this.isOpenMinConsume = false;
     },
-    handlePriceSettingClose(done) {
-      this.$confirm("确认关闭？")
-        .then((_) => {
-          done();
-        })
-        .catch((_) => {});
-    },
     handleSaveOpenMinConsume() {
       this.dialogVisible = false;
+    },
+    handleSavePriceSetting() {
+      debugger;
+      if (this.isAdd) {
+        if (this.form.paperKind) {
+          this.form.paperKind = 9;
+        }
+        settingApi.addPrintPriceSettings(this.form).then((res) => {
+          this.search();
+          this.dialogPriceSettingVisible = false;
+          this.$message({
+            message: "保存成功",
+            type: "success",
+          });
+        });
+      } else {
+        this.form.paperKind = 9;
+        settingApi.updatePrintPriceSettings(this.form).then((res) => {
+          this.search();
+          this.dialogPriceSettingVisible = false;
+          this.$message({
+            message: "保存成功",
+            type: "success",
+          });
+        });
+      }
+    },
+    handleDeletePriceSetting(id) {
+      this.$confirm("是否确认删除该价格设置?", {
+        confirmButtonText: "确 认",
+        cancelButtonText: "取 消",
+        type: "warning",
+      })
+        .then(() => {
+          debugger;
+          settingApi.deletePrintPriceSettings(id).then((res) => {
+            debugger;
+            console.log(res);
+            this.$message({
+              message: "删除成功",
+              type: "success",
+            });
+            this.search();
+          });
+        })
+        .catch(() => {
+          //doSomething()
+        });
     },
   },
 };

@@ -97,12 +97,7 @@
             </div>
           </div>
         </div>
-        <el-dialog
-          :visible.sync="dialogDownload"
-          width="30%"
-          center
-          :before-close="handleClose"
-        >
+        <el-dialog :visible.sync="dialogDownload" width="30%" center>
           <span slot="title" class="dialog-title">请选择需要下载的文件</span>
 
           <div
@@ -155,7 +150,6 @@
 
 <script>
 import printerApi from "@/api/printer";
-import printerWorld from "@/utils/PrintWorld";
 import { color } from "echarts";
 export default {
   data() {

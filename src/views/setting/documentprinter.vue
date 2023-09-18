@@ -2,7 +2,7 @@
   <div>
     <div class="header-section">
       <span class="header-label">配置打印机台数</span>
-      <span class="header-count">共0个</span
+      <span class="header-count">共{{ printerCount }}个</span
       ><i class="el-icon-refresh-right refresh"></i>
     </div>
     <div class="detail-section">
@@ -19,7 +19,7 @@
           用户新下单文件、自动打印完成后还会进行语音播报通知</span
         >
       </el-row>
-      <div v-for="item in printList" :key="item.Id" class="detail-item">
+      <div v-for="item in printerList" :key="item.id" class="detail-item">
         <div>
           <img
             :src="[
@@ -44,8 +44,8 @@
             ></span
           >
           <span class="printer-parameter"
-            >配置参数：【{{ item.supportPaperKind }}】 【{{
-              item.supportColor
+            >配置参数：【{{ enums.PaperKind[item.supportPaperKind] }}】 【{{
+              enums.PageColor[item.supportColor]
             }}】 【{{ item.printerType }}】</span
           >
         </div>
@@ -55,7 +55,7 @@
             </el-switch>
             <el-button
               :disabled="!item.isEnabled"
-              @click="handleEdit(item)"
+              @click="handleUpdPrinter(item)"
               class="margin-left15px vertical-align-middle"
               type="text"
               ><img
@@ -68,7 +68,7 @@
             /></el-button>
             <el-button
               :disabled="!item.isEnabled"
-              @click="handleDeletePrinter(item.Id)"
+              @click="showDeleteDialog(item.id)"
               class="margin-left10px vertical-align-middle"
               type="text"
               ><img
@@ -83,49 +83,50 @@
         </div>
       </div>
       <div class="text-align-center margin-top40px">
-        <el-button class="btn-add-printer">添加打印机</el-button>
+        <el-button @click="handleAddPrinter" class="btn-add-printer"
+          >添加打印机</el-button
+        >
       </div>
     </div>
-    <el-dialog
-      :visible.sync="dialogVisible"
-      width="30%"
-      center
-      :before-close="handleClose"
-    >
+    <el-dialog :visible.sync="dialogVisible" width="700px" center>
       <span slot="title" class="dialog-title">常规打印机属性配置</span>
       <el-form ref="form" :model="form" label-width="100px">
         <el-form-item>
           <span slot="label" class="dialog-label">打印机别名：</span>
-          <el-input v-model="form.printerName"></el-input>
+
+          <el-select v-model="form.printerName" placeholder="请选择打印机">
+            <el-option
+              v-for="item in localPrinterList"
+              :key="item.name"
+              :value="item.name_original"
+              >{{ item.name_original }}</el-option
+            >
+          </el-select>
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">颜色设置：</span>
-          <el-select v-model="form.supportColor" placeholder="">
-            <el-option label="只打黑白" value="黑白"></el-option>
-            <el-option label="彩色" value="彩色"></el-option>
+          <el-select v-model="form.supportColor" placeholder="请选择颜色">
+            <el-option label="只打黑白" :value="0"></el-option>
+            <el-option label="彩色" :value="1"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">单双面设置：</span>
-          <el-select v-model="form.printerType" placeholder="">
-            <el-option label="支持双面" value="双面"></el-option>
-            <el-option label="单面" value="单面"></el-option>
+          <el-select v-model="form.printerType" placeholder="请选择单双面">
+            <el-option label="单面" :value="1"></el-option>
+            <el-option label="长边双面" :value="2"></el-option>
+            <el-option label="短边双面" :value="3"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">支持纸张：</span>
-          <el-checkbox-group v-model="form.supportPaperKind">
-            <div>
-              <el-checkbox label="A4" name="A4"></el-checkbox>
-              <el-checkbox label="B5" name="B5"></el-checkbox>
-              <el-checkbox label="A5" name="A5"></el-checkbox>
-            </div>
-            <div>
-              <el-checkbox label="A3" name="A3"></el-checkbox>
-              <el-checkbox label="B4" name="B4"></el-checkbox>
-              <el-checkbox label="8K" name="8K"></el-checkbox>
-            </div>
-          </el-checkbox-group>
+
+          <el-checkbox
+            v-model="form.supportPaperKind"
+            :true-label="9"
+            :false-label="0"
+            >A4</el-checkbox
+          >
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">出纸优先级：</span>
@@ -141,18 +142,13 @@
       </div>
     </el-dialog>
 
-    <el-dialog
-      :visible.sync="dialogDelete"
-      width="20%"
-      center
-      :before-close="handleDeleteClose"
-    >
+    <el-dialog :visible.sync="dialogDelete" width="20%" center>
       <span slot="title" class="dialog-title">温馨提示</span>
       <p class="dialog-content">是否确认删除该打印机</p>
       <p class="dialog-content">该打印机将无法接收处理自助打印订单</p>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogDelete = false">取 消</el-button>
-        <el-button class="btn-save" @click="dialogDelete = false"
+        <el-button class="btn-save" @click="handleDeletePrinter()"
           >确 认</el-button
         >
       </div>
@@ -161,82 +157,115 @@
 </template>
 
 <script>
+let printWorld;
 import settingApi from "@/api/setting";
+import moment from "moment";
+import { enums } from "@/utils/common";
 export default {
   data() {
     return {
+      isAdd: "",
+      currentSelectedId: "",
+      printerCount: 0,
+      enums: enums,
       isBroadcast: true,
       value2: true,
       dialogVisible: false,
       dialogDelete: false,
       form: {
-        Id: "",
+        id: "",
         printerName: "",
         supportColor: "",
         supportPaperKind: [],
         printerType: "",
-        isPriority: true,
       },
-      printList: [
-        {
-          Id: "1",
-          printerName: "FX ApeosPort-V C333",
-          isPriority: true,
-          printerType: "双面",
-          supportPaperKind: ["A3", "A4"],
-          supportColor: "彩色",
-          isEnabled: true,
-        },
-        {
-          Id: "2",
-          printerName: "FX ApeosPort-V C330",
-          isPriority: false,
-          printerType: "单面",
-          supportPaperKind: ["A3"],
-          supportColor: "黑白",
-          isEnabled: false,
-        },
-      ],
+      printerList: [],
+      localPrinterList: [],
+      moment,
     };
   },
   created() {
-    debugger;
     this.search();
+    printWorld = GetPrintWorld();
+    this.getPrinterList();
   },
   methods: {
     async search() {
       let res = settingApi.getPrinterSettingsData().then((res) => {
-        console.log(res);
+        this.printerList = res;
+        this.printerCount = res.length;
       });
     },
-    handleClose(done) {
-      this.$confirm("确认关闭？")
-        .then((_) => {
-          done();
-        })
-        .catch((_) => {});
+    showDeleteDialog(id) {
+      this.dialogDelete = true;
+      this.currentSelectedId = id;
     },
-    handleDeleteClose(done) {
-      this.$confirm("确认关闭？")
-        .then((_) => {
-          done();
-        })
-        .catch((_) => {});
+    handleAddPrinter() {
+      this.isAdd = true;
+      this.dialogVisible = true;
+      this.form = {};
     },
-    handleEdit(row) {
+    handleUpdPrinter(row) {
+      this.isAdd = false;
       this.dialogVisible = true;
       this.form = Object.assign({}, row);
+      console.log(row);
+      //this.form.supportColor = "1";
     },
-    handleDeletePrinter(Id) {
-      this.dialogDelete = true;
-      let res = settingApi.deletePrinter(Id).then((res) => {});
+    handleDeletePrinter() {
+      let res = settingApi
+        .deletePrinterSettings(this.currentSelectedId)
+        .then((res) => {
+          console.log(res);
+          this.dialogDelete = false;
+          this.$message({
+            message: "删除成功",
+            type: "success",
+          });
+          this.search();
+        });
     },
     handleBroadcastSwitch() {
       alert(this.isBroadcast);
     },
     onSubmit() {
-      this.dialogVisible = false;
-      let res = settingApi.savePrinterSettings(this.form).then((res) => {});
+      debugger;
+      if (this.isAdd) {
+        settingApi.addPrinterSettings(this.form).then((res) => {
+          this.search();
+          this.dialogVisible = false;
+          this.$message({
+            message: "保存成功",
+            type: "success",
+          });
+        });
+      } else {
+        settingApi.updatePrinterSettings(this.form).then((res) => {
+          this.search();
+          this.dialogVisible = false;
+          this.$message({
+            message: "保存成功",
+            type: "success",
+          });
+        });
+      }
+    },
+    getPrinterList() {
+      const json = {
+        action: "printers",
+        refresh: true,
+        defaultprn: true,
+      };
+      printWorld.CallbackOnPrinterList((list) => {
+        this.localPrinterList = list.val;
+        console.log(this.localPrinterList);
+        // this.localPrinterList.forEach((item) => {
+        //   if (item.default) {
+        //     this.form.printer = item.name;
+        //   }
+        // });
+      });
+      printWorld.Act(json);
     },
   },
 };

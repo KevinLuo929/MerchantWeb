@@ -132,7 +132,7 @@ export default {
         .getOrder({
           pageIndex: 1,
           pageSize: 100,
-          orderStatus: [5],
+          orderStatus: [0, 1, 2, 3, 5],
         })
         .then((res) => {
           debugger;

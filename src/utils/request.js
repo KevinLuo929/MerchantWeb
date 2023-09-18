@@ -127,33 +127,10 @@ const http = {
     }
   },
   delete(url, params) {
-    let _params;
-    if (Object.is(params, undefined || null)) {
-      _params = "";
-    } else {
-      _params = "/";
-      for (const key in params) {
-        if (
-          params.hasOwnProperty(key) &&
-          params[key] !== null &&
-          params[key] !== ""
-        ) {
-          _params += `${params[key]}/`;
-        }
-      }
-      _params = _params.substr(0, _params.length - 1);
-      if (_params) {
-        return service.delete(`${url}${_params}`).catch((err) => {
-          message.error(err.msg);
-          return Promise.reject(err);
-        });
-      } else {
-        return service.delete(url).catch((err) => {
-          message.error(err.msg);
-          return Promise.reject(err);
-        });
-      }
-    }
+    return service.delete(`${url}/${params}`).catch((err) => {
+      message.error(err.msg);
+      return Promise.reject(err);
+    });
   },
   login(url, params) {
     debugger;
