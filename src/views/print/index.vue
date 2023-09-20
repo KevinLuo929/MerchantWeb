@@ -3,143 +3,147 @@
     <div class="padding20px">
       <span class="todo-order">未完成订单</span
       ><span class="todo-count"> 共{{ totalNumber }}个</span>
-      <i class="el-icon-refresh-right float-right"></i>
+      <el-button @click="handleSearch" class="btn-search" type="text"
+        ><i class="el-icon-refresh-right"></i
+      ></el-button>
     </div>
     <div v-show="hasOrder">
-      <div
-        v-for="item in orderList"
-        :key="item.orderId"
-        class="order-info-section"
-      >
-        <div class="border-bottom">
-          <div class="order-info-date">
-            <span>{{ item.created }}</span>
-            <span class="order-code-label"
-              >取件码：<span class="order-code">{{
-                item.claimCode
-              }}</span></span
+      <div v-for="item in orderList" :key="item.orderId">
+        <div class="order-info-section">
+          <div class="border-bottom">
+            <div class="order-info-date">
+              <span>{{
+                moment(item.createTime).format("YYYY-MM-DD HH:mm")
+              }}</span>
+              <span class="order-code-label"
+                >取件码：<span class="order-code">{{
+                  item.takeNumber
+                }}</span></span
+              >
+            </div>
+          </div>
+          <div>
+            <div
+              v-for="(docItem, index) in item.printDocModels"
+              :key="docItem.id"
+              class="order-detail-section"
             >
-          </div>
-        </div>
-        <div>
-          <div class="order-detail-section">
-            <div>
-              <img
-                :src="require('../../assets/' + item.documentType + '.png')"
-                alt=""
-              />
+              <div>
+                <img :src="require('../../assets/word.png')" alt="" />
+              </div>
+              <div class="order-detail-line">
+                <div class="order-detail-name">
+                  {{ docItem.fileName }}
+                  <span v-if="index == 0" class="order-status">{{
+                    enums.OrderStatus[item.orderStatus]
+                  }}</span>
+                </div>
+                <div class="order-detail-info">
+                  <span>{{ enums.PaperKind[docItem.paperKind] }}</span>
+                  |<span>{{
+                    enums.PageOrientation[docItem.pageOrientation]
+                  }}</span
+                  >|<span>{{ enums.PageColor[docItem.printColor] }}</span
+                  >|<span>{{ enums.PageDuplex[docItem.printDuplex] }}</span
+                  >|<span>{{ docItem.copies }}份</span>|<span
+                    >打印[{{ docItem.printPages }}]页</span
+                  >
+                </div>
+              </div>
             </div>
-            <div class="order-detail-line">
-              <div class="order-detail-name">
-                {{ item.name }}
-                <span
-                  :class="[
-                    item.status == '已下载'
-                      ? 'order-status order-status-downloaded'
-                      : 'order-status order-status-refunded',
-                  ]"
-                  >{{ item.status }}</span
+          </div>
+          <div class="order-footer">
+            <div class="display-flex">
+              <div>
+                <img
+                  class="vertical-align-bottom"
+                  src="../../assets/wechatpay.svg"
+                  alt=""
+                /><span class="order-price">¥{{ item.totalPrice }}</span>
+                <img
+                  class="vertical-align-bottom margin-left15px"
+                  src="../../assets/shop.svg"
+                  alt=""
+                />
+                <span class="printer-type"></span>
+              </div>
+              <div class="operation-container">
+                <div @click="handlePrint" class="operation">
+                  <img src="../../assets/printer.png" alt="" />
+                </div>
+                <div @click="handleDownload(item)" class="operation">
+                  <img src="../../assets/folder_download.png" alt="" />
+                </div>
+                <div @click="handleFolder" class="operation">
+                  <input type="file" id="file" hidden @change="fileChange" />
+                  <img
+                    src="../../assets/folder.png"
+                    @click="btnChange"
+                    alt=""
+                  />
+                </div>
+                <div @click="handleCancel" class="operation">
+                  <img src="../../assets/cancel.png" alt="" />
+                </div>
+                <div @click="handleFinish" class="operation">
+                  <img src="../../assets/finish.png" alt="" />
+                </div>
+                <!-- <div
+                  v-if="item.status == '已退款'"
+                  @click="handleFinish"
+                  class="operation"
                 >
-              </div>
-              <div class="order-detail-info">
-                A4|纵向|黑白|单面|4份|打印[1-12]页
-              </div>
-            </div>
-          </div>
-          <div v-if="showReminder" class="reminder-container">
-            <i class="el-icon-warning reminder-icon"></i>
-            <span class="reminder-label">搜索不到可用打印机</span>
-          </div>
-        </div>
-        <div class="order-footer">
-          <div class="display-flex">
-            <div>
-              <img
-                class="vertical-align-bottom"
-                src="../../assets/wechatpay.svg"
-                alt=""
-              /><span class="order-price">¥{{ item.price }}</span>
-              <img
-                class="vertical-align-bottom margin-left15px"
-                src="../../assets/shop.svg"
-                alt=""
-              />
-              <span class="printer-type">{{ item.printType }}</span>
-            </div>
-            <div class="operation-container">
-              <div @click="handlePrint" class="operation">
-                <img src="../../assets/printer.png" alt="" />
-              </div>
-              <div @click="handleDownload" class="operation">
-                <img src="../../assets/folder_download.png" alt="" />
-              </div>
-              <div @click="handleFolder" class="operation">
-                <input type="file" id="file" hidden @change="fileChange" />
-                <img src="../../assets/folder.png" @click="btnChange" alt="" />
-              </div>
-              <div @click="handleCancel" class="operation">
-                <img src="../../assets/cancel.png" alt="" />
-              </div>
-              <div
-                v-if="item.status == '已下载'"
-                @click="handleFinish"
-                class="operation"
-              >
-                <img src="../../assets/finish.png" alt="" />
-              </div>
-              <div
-                v-if="item.status == '已退款'"
-                @click="handleFinish"
-                class="operation"
-              >
-                <img src="../../assets/finish_disable.png" alt="" />
+                  <img src="../../assets/finish_disable.png" alt="" />
+                </div> -->
               </div>
             </div>
           </div>
         </div>
-        <el-dialog :visible.sync="dialogDownload" width="30%" center>
-          <span slot="title" class="dialog-title">请选择需要下载的文件</span>
-
-          <div
-            v-for="item in downloadList"
-            :key="item.id"
-            class="order-detail-section"
-          >
-            <div class="checkbox">
-              <el-checkbox v-model="item.checked"></el-checkbox>
-            </div>
-            <div class="margin-left10px">
-              <img :src="require('../../assets/word.png')" alt="" />
-            </div>
-            <div class="order-detail-line">
-              <div class="order-detail-name">
-                {{ item.fileName }}
-              </div>
-              <div class="order-detail-info">
-                {{ item.paperKind }}|{{ item.pageOrientation }}|{{
-                  item.printColor
-                }}|{{ item.printDuplex }}|{{ item.totalPageCount }}份|打印[{{
-                  item.totalPrintPageCount
-                }}]页
-              </div>
-            </div>
-          </div>
-          <div slot="footer" class="dialog-footer">
-            <el-row>
-              <el-col :span="12">
-                <el-checkbox class="selectAll" v-model="allSelected"
-                  >全选</el-checkbox
-                >
-              </el-col>
-              <el-col :span="12">
-                <el-button class="btn-download" @click="download()"
-                  >下载</el-button
-                >
-              </el-col>
-            </el-row>
-          </div>
-        </el-dialog>
       </div>
+      <el-dialog :visible.sync="dialogDownload" width="30%" center>
+        <span slot="title" class="dialog-title">请选择需要下载的文件</span>
+
+        <div
+          v-for="docItem in downloadDocList"
+          :key="docItem.id"
+          class="order-detail-section"
+        >
+          <div class="checkbox">
+            <el-checkbox v-model="checked"></el-checkbox>
+          </div>
+          <div class="margin-left10px">
+            <img :src="require('../../assets/word.png')" alt="" />
+          </div>
+          <div class="order-detail-line">
+            <div class="order-detail-name">
+              {{ docItem.fileName }}
+            </div>
+            <div class="order-detail-info">
+              <span>{{ enums.PaperKind[docItem.paperKind] }}</span>
+              |<span>{{ enums.PageOrientation[docItem.pageOrientation] }}</span
+              >|<span>{{ enums.PageColor[docItem.printColor] }}</span
+              >|<span>{{ enums.PageDuplex[docItem.printDuplex] }}</span
+              >|<span>{{ docItem.copies }}份</span>|<span
+                >打印[{{ docItem.printPages }}]页</span
+              >
+            </div>
+          </div>
+        </div>
+        <div slot="footer" class="dialog-footer">
+          <el-row>
+            <el-col :span="12">
+              <el-checkbox class="selectAll" v-model="selectAll"
+                >全选</el-checkbox
+              >
+            </el-col>
+            <el-col :span="12">
+              <el-button class="btn-download" @click="dialogDownload = false"
+                >下载</el-button
+              >
+            </el-col>
+          </el-row>
+        </div>
+      </el-dialog>
     </div>
     <div v-show="!hasOrder" class="no-order-section">
       <div><img src="../../assets/print_big.png" alt="" /></div>
@@ -150,74 +154,22 @@
 
 <script>
 import printerApi from "@/api/printer";
+import moment from "moment";
+import { enums } from "@/utils/common";
 import { color } from "echarts";
 export default {
   data() {
     return {
+      enums: enums,
       showReminder: false,
       checked: false,
       selectAll: false,
       dialogDownload: false,
       hasOrder: true,
       totalNumber: 0,
-      orderList: [
-        {
-          orderId: "1",
-          created: "2020-10-1 9:56",
-          claimCode: "00-13",
-          documentType: "pdf",
-          name: "测试文档.pdf",
-          status: "已下载",
-          price: 1.2,
-          printType: "店内打印",
-        },
-        {
-          orderId: "2",
-          created: "2023-10-1 11:56",
-          claimCode: "00-12",
-          documentType: "word",
-          name: "测试文档2.word",
-          status: "已退款",
-          price: 1.2,
-          printType: "远程下单（到店自取）",
-        },
-      ],
-      downloadList: [
-        {
-          id: "1",
-          checked: false,
-          fileName: "语文考题.pdf",
-          url: "https://bd2.GovSpend.com/aee729528532c1eb80546e5f3183c6e2/5ebb551a95599f0ef1fa9949cdbe6157/RFP-202307163-MCILS-Application-FINAL.docx",
-          paperKind: "A4",
-          pageOrientation: "纵向",
-          printColor: "黑白",
-          printDuplex: "单面",
-          totalPageCount: "4",
-          totalPrintPageCount: "1-12",
-          copies: "",
-          price: "",
-          filePrintStatus: "",
-          printPages: "",
-          printShopId: "",
-        },
-        {
-          id: "2",
-          checked: false,
-          fileName: "数学考题.pdf",
-          url: "https://bd2.GovSpend.com/5256780a73d614b99102867054573ddc/ae3e84aa558a07922804e28c378b1f91/SDP_Plan_Form-as-of-Feb-20225.xlsx",
-          paperKind: "A4",
-          pageOrientation: "纵向",
-          printColor: "黑白",
-          printDuplex: "单面",
-          totalPageCount: "4",
-          totalPrintPageCount: "1-12",
-          copies: "",
-          price: "",
-          filePrintStatus: "",
-          printPages: "",
-          printShopId: "",
-        },
-      ],
+      moment,
+      orderList: [],
+      downloadDocList: [],
     };
   },
   created() {
@@ -230,20 +182,25 @@ export default {
         .getOrder({
           pageIndex: 1,
           pageSize: 100,
-          orderStatus: [0],
+          orderStatus: [6],
         })
         .then((res) => {
+          debugger;
           this.totalNumber = res.totalNumber;
+          if (this.totalNumber > 0) {
+            this.hasOrder = true;
+          }
           this.orderList = res.result;
-          // if (this.totalNumber > 0) {
-          //   this.hasOrder = true;
-          // }
         });
+    },
+    handleSearch() {
+      this.search();
     },
     async handlePrint() {
       console.log("handlePrint");
     },
-    async handleDownload() {
+    async handleDownload(item) {
+      this.downloadDocList = item.printDocModels;
       this.dialogDownload = true;
     },
     async handleFolder() {
@@ -368,12 +325,12 @@ export default {
   computed: {
     allSelected: {
       get() {
-        return this.downloadList.every((i) => {
+        return this.downloadDocList.every((i) => {
           return i.checked;
         });
       },
       set(isCheck) {
-        this.downloadList.forEach((t) => {
+        this.downloadDocList.forEach((t) => {
           t.checked = isCheck;
         });
       },
@@ -480,6 +437,9 @@ export default {
   font-size: 12px;
   font-family: PingFangSC-Regular;
 }
+.order-detail-info span {
+  padding: 0 5px;
+}
 .border-bottom {
   border-bottom: 1px solid rgb(226, 222, 222);
 }
@@ -547,6 +507,12 @@ export default {
 .btn-download {
   background-color: #40db98;
   color: #ffffff;
+  float: right;
+}
+.btn-search {
+  font-size: 20px;
+  margin-left: 10px;
+  color: #1f1f1f;
   float: right;
 }
 </style>

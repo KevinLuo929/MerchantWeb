@@ -31,11 +31,7 @@
     </div>
     <div v-show="hasOrder">
       <div v-for="item in orderList" :key="item.orderId">
-        <div
-          v-for="docItem in item.printDocModels"
-          :key="docItem.id"
-          class="order-info-section"
-        >
+        <div class="order-info-section">
           <div class="border-bottom">
             <div class="order-info-date">
               <span>{{
@@ -49,21 +45,28 @@
             </div>
           </div>
           <div>
-            <div class="order-detail-section">
+            <div
+              v-for="docItem in item.printDocModels"
+              :key="docItem.id"
+              class="order-detail-section"
+            >
               <div>
                 <img :src="require('../../assets/word.png')" alt="" />
               </div>
               <div class="order-detail-line">
                 <div class="order-detail-name">
                   {{ docItem.fileName }}
-                  <span class="order-status">{{ item.status }}</span>
                 </div>
                 <div class="order-detail-info">
-                  {{ enums.PaperKind[docItem.paperKind] }}|{{
+                  <span>{{ enums.PaperKind[docItem.paperKind] }}</span>
+                  |<span>{{
                     enums.PageOrientation[docItem.pageOrientation]
-                  }}|{{ enums.PageColor[docItem.printColor] }}|{{
-                    enums.PageDuplex[docItem.printDuplex]
-                  }}|{{ docItem.copies }}份|打印[{{ docItem.printPages }}]页
+                  }}</span
+                  >|<span>{{ enums.PageColor[docItem.printColor] }}</span
+                  >|<span>{{ enums.PageDuplex[docItem.printDuplex] }}</span
+                  >|<span>{{ docItem.copies }}份</span>|<span
+                    >打印[{{ docItem.printPages }}]页</span
+                  >
                 </div>
               </div>
             </div>
@@ -75,7 +78,7 @@
                   class="vertical-align-bottom"
                   src="../../assets/wechatpay.svg"
                   alt=""
-                /><span class="order-price">¥{{ docItem.price }}</span>
+                /><span class="order-price">¥{{ item.totalPrice }}</span>
                 <img
                   class="vertical-align-bottom margin-left15px"
                   src="../../assets/shop.svg"
@@ -87,17 +90,66 @@
                 <div @click="handlePrint" class="operation">
                   <img src="../../assets/printer.png" alt="" />
                 </div>
-                <div @click="handleDownload" class="operation">
+                <div @click="handleDownload(item)" class="operation">
                   <img src="../../assets/folder_download.png" alt="" />
                 </div>
                 <div @click="handleFolder" class="operation">
-                  <img src="../../assets/folder.png" alt="" />
+                  <input type="file" id="file" hidden @change="fileChange" />
+                  <img
+                    src="../../assets/folder.png"
+                    @click="btnChange"
+                    alt=""
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+      <el-dialog :visible.sync="dialogDownload" width="30%" center>
+        <span slot="title" class="dialog-title">请选择需要下载的文件</span>
+
+        <div
+          v-for="docItem in downloadDocList"
+          :key="docItem.id"
+          class="order-detail-section"
+        >
+          <div class="checkbox">
+            <el-checkbox v-model="checked"></el-checkbox>
+          </div>
+          <div class="margin-left10px">
+            <img :src="require('../../assets/word.png')" alt="" />
+          </div>
+          <div class="order-detail-line">
+            <div class="order-detail-name">
+              {{ docItem.fileName }}
+            </div>
+            <div class="order-detail-info">
+              <span>{{ enums.PaperKind[docItem.paperKind] }}</span>
+              |<span>{{ enums.PageOrientation[docItem.pageOrientation] }}</span
+              >|<span>{{ enums.PageColor[docItem.printColor] }}</span
+              >|<span>{{ enums.PageDuplex[docItem.printDuplex] }}</span
+              >|<span>{{ docItem.copies }}份</span>|<span
+                >打印[{{ docItem.printPages }}]页</span
+              >
+            </div>
+          </div>
+        </div>
+        <div slot="footer" class="dialog-footer">
+          <el-row>
+            <el-col :span="12">
+              <el-checkbox class="selectAll" v-model="selectAll"
+                >全选</el-checkbox
+              >
+            </el-col>
+            <el-col :span="12">
+              <el-button class="btn-download" @click="dialogDownload = false"
+                >下载</el-button
+              >
+            </el-col>
+          </el-row>
+        </div>
+      </el-dialog>
     </div>
     <div v-show="!hasOrder" class="no-order-section">
       <div><img src="../../assets/print_big.png" alt="" /></div>
@@ -110,17 +162,20 @@
 import printerApi from "@/api/printer";
 import moment from "moment";
 import { enums } from "@/utils/common";
+import { color } from "echarts";
 export default {
   data() {
     return {
       enums: enums,
+      showReminder: false,
       checked: false,
       selectAll: false,
       dialogDownload: false,
-      hasOrder: false,
+      hasOrder: true,
       totalNumber: 0,
-      orderList: [],
       moment,
+      orderList: [],
+      downloadDocList: [],
     };
   },
   created() {
@@ -132,7 +187,7 @@ export default {
         .getOrder({
           pageIndex: 1,
           pageSize: 100,
-          orderStatus: [0, 1, 2, 3, 5],
+          orderStatus: [6],
         })
         .then((res) => {
           debugger;
@@ -143,24 +198,58 @@ export default {
           this.orderList = res.result;
         });
     },
-    async handleSearch() {
-      printerApi.getOrderByTakeNumber().then((res) => {
-        debugger;
-        this.totalNumber = res.totalNumber;
-        if (this.totalNumber > 0) {
-          this.hasOrder = true;
-        }
-        this.orderList = res.result;
-      });
+    handleSearch() {
+      this.search();
     },
     async handlePrint() {
       console.log("handlePrint");
     },
-    async handleDownload() {
+    async handleDownload(item) {
+      this.downloadDocList = item.printDocModels;
       this.dialogDownload = true;
     },
     async handleFolder() {
       console.log("handleFolder");
+    },
+    download() {
+      this.downloadList.forEach((d) => {
+        debugger;
+        if (d.checked) {
+          var elemIF = document.createElement("iframe");
+          elemIF.src = d.url;
+          elemIF.style.display = "none";
+          document.body.appendChild(elemIF);
+        }
+      });
+      this.dialogDownload = false;
+    },
+    fileChange(e) {
+      try {
+        debugger;
+        const file = document.getElementById("file");
+        if (file == null) return;
+        console.log(file.files[0].path);
+      } catch (error) {
+        console.debug("choice file err:", error);
+      }
+    },
+    btnChange() {
+      var file = document.getElementById("file");
+      file.click();
+    },
+  },
+  computed: {
+    allSelected: {
+      get() {
+        return this.downloadDocList.every((i) => {
+          return i.checked;
+        });
+      },
+      set(isCheck) {
+        this.downloadDocList.forEach((t) => {
+          t.checked = isCheck;
+        });
+      },
     },
   },
 };
@@ -261,6 +350,9 @@ export default {
   color: rgba(89, 89, 89, 1);
   font-size: 12px;
   font-family: PingFangSC-Regular;
+}
+.order-detail-info span {
+  padding: 0 5px;
 }
 .border-bottom {
   border-bottom: 1px solid rgb(226, 222, 222);

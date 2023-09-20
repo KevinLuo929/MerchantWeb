@@ -41,6 +41,14 @@ const enums = {
     1: "文档打印机",
     2: "图片打印机",
   },
+  FileType: {
+    doc: "word",
+    docx: "word",
+    xls: "excel",
+    xlsx: "excel",
+    pdf: "pdf",
+    ppt: "ppt",
+  },
 };
 
 export { enums };

@@ -7,11 +7,7 @@
     </div>
     <div v-show="hasOrder">
       <div v-for="item in orderList" :key="item.orderId">
-        <div
-          v-for="docItem in item.printDocModels"
-          :key="docItem.id"
-          class="order-info-section"
-        >
+        <div class="order-info-section">
           <div class="border-bottom">
             <div class="order-info-date">
               <span>{{
@@ -25,21 +21,28 @@
             </div>
           </div>
           <div>
-            <div class="order-detail-section">
+            <div
+              v-for="docItem in item.printDocModels"
+              :key="docItem.id"
+              class="order-detail-section"
+            >
               <div>
                 <img :src="require('../../assets/word.png')" alt="" />
               </div>
               <div class="order-detail-line">
                 <div class="order-detail-name">
                   {{ docItem.fileName }}
-                  <span class="order-status">{{ item.status }}</span>
+                  <!-- <span class="order-status">{{ item.status }}</span> -->
                 </div>
                 <div class="order-detail-info">
-                  {{ enums.PaperKind[docItem.paperKind] }}|{{
-                    enums.PageOrientation[docItem.pageOrientation]
-                  }}|{{ enums.PageColor[docItem.printColor] }}|{{
-                    enums.PageDuplex[docItem.printDuplex]
-                  }}|{{ docItem.copies }}份|打印[{{ docItem.printPages }}]页
+                  <span> {{ enums.PaperKind[docItem.paperKind] }}</span
+                  >|<span>
+                    {{ enums.PageOrientation[docItem.pageOrientation] }}</span
+                  >|<span> {{ enums.PageColor[docItem.printColor] }}</span
+                  >|<span> {{ enums.PageDuplex[docItem.printDuplex] }}</span
+                  >|<span> {{ docItem.copies }}份</span>|<span>
+                    打印[{{ docItem.printPages }}]页</span
+                  >
                 </div>
               </div>
             </div>
@@ -55,7 +58,7 @@
                   class="vertical-align-bottom"
                   src="../../assets/wechatpay.svg"
                   alt=""
-                /><span class="order-price">¥{{ docItem.price }}</span>
+                /><span class="order-price">¥{{ item.totalPrice }}</span>
                 <img
                   class="vertical-align-bottom margin-left15px"
                   src="../../assets/shop.svg"
@@ -75,6 +78,10 @@
           </div>
         </div>
       </div>
+    </div>
+    <div v-show="!hasOrder" class="no-order-section">
+      <div><img src="../../assets/print_big.png" alt="" /></div>
+      <div class="no-order-text">暂时没有订单哦~</div>
     </div>
   </div>
 </template>
@@ -309,6 +316,9 @@ export default {
   color: rgba(89, 89, 89, 1);
   font-size: 12px;
   font-family: PingFangSC-Regular;
+}
+.order-detail-info span {
+  padding: 0 5px;
 }
 .border-bottom {
   border-bottom: 1px solid rgb(226, 222, 222);
