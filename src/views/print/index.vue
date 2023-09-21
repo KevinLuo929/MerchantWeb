@@ -109,7 +109,10 @@
           class="order-detail-section"
         >
           <div class="checkbox">
-            <el-checkbox v-model="checked"></el-checkbox>
+            <el-checkbox
+              @change="handleSingleSelect"
+              v-model="docItem.checked"
+            ></el-checkbox>
           </div>
           <div class="margin-left10px">
             <img :src="require('../../assets/word.png')" alt="" />
@@ -132,12 +135,15 @@
         <div slot="footer" class="dialog-footer">
           <el-row>
             <el-col :span="12">
-              <el-checkbox class="selectAll" v-model="selectAll"
+              <el-checkbox
+                class="selectAll"
+                v-model="selectAll"
+                @change="handleSelectAll"
                 >全选</el-checkbox
               >
             </el-col>
             <el-col :span="12">
-              <el-button class="btn-download" @click="dialogDownload = false"
+              <el-button class="btn-download" @click="handleDownloadDoc"
                 >下载</el-button
               >
             </el-col>
@@ -175,6 +181,15 @@ export default {
   created() {
     //printWorld = GetPrintWorld();
     this.search();
+    // var arr = [
+    //   { url: "http://43.142.4.18:8011/data/test2.xlsx", name: "1" },
+    //   { url: "http://43.142.4.18:8011/data/test.docx", name: "2" },
+    // ];
+    // arr.forEach((item) => {
+    //   debugger;
+    //   this.downloadFile(item.url);
+    // });
+    //this.downloadFile()
   },
   methods: {
     async search() {
@@ -185,7 +200,6 @@ export default {
           orderStatus: [6],
         })
         .then((res) => {
-          debugger;
           this.totalNumber = res.totalNumber;
           if (this.totalNumber > 0) {
             this.hasOrder = true;
@@ -200,11 +214,55 @@ export default {
       console.log("handlePrint");
     },
     async handleDownload(item) {
+      this.selectAll = false;
       this.downloadDocList = item.printDocModels;
+      this.downloadDocList.forEach((item) => {
+        this.$set(item, "checked", false);
+      });
       this.dialogDownload = true;
+    },
+    async handleDownloadDoc() {
+      this.dialogDownload = false;
+      this.downloadDocList
+        .filter((d) => d.checked)
+        .forEach((item) => {
+          this.downloadFile(item.url);
+        });
     },
     async handleFolder() {
       console.log("handleFolder");
+    },
+    handleSingleSelect() {
+      if (
+        this.downloadDocList.filter((item) => item.checked).length ==
+        this.downloadDocList.length
+      ) {
+        this.selectAll = true;
+      } else {
+        this.selectAll = false;
+      }
+    },
+    handleSelectAll() {
+      debugger;
+      if (this.selectAll) {
+        this.downloadDocList.forEach((item) => {
+          item.checked = true;
+        });
+      } else {
+        this.downloadDocList.forEach((item) => {
+          item.checked = false;
+        });
+      }
+    },
+    downloadFile(path) {
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.style.height = 0;
+      iframe.src = path;
+      document.body.appendChild(iframe);
+      setTimeout(() => {
+        iframe.remove();
+      }, 5 * 60 * 1000);
     },
     async handleCancel() {
       this.$confirm("是否确认取消订单并进行退款?", {
@@ -231,18 +289,6 @@ export default {
         .catch(() => {
           //doSomething()
         });
-    },
-    download() {
-      this.downloadList.forEach((d) => {
-        debugger;
-        if (d.checked) {
-          var elemIF = document.createElement("iframe");
-          elemIF.src = d.url;
-          elemIF.style.display = "none";
-          document.body.appendChild(elemIF);
-        }
-      });
-      this.dialogDownload = false;
     },
     fileChange(e) {
       try {
@@ -320,20 +366,6 @@ export default {
       } else {
         alert(json.error);
       }
-    },
-  },
-  computed: {
-    allSelected: {
-      get() {
-        return this.downloadDocList.every((i) => {
-          return i.checked;
-        });
-      },
-      set(isCheck) {
-        this.downloadDocList.forEach((t) => {
-          t.checked = isCheck;
-        });
-      },
     },
   },
 };

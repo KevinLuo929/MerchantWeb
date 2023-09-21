@@ -9,7 +9,7 @@
         <div class="filter-section">
           <el-input
             placeholder="查询订单请输入取件码数字"
-            v-model="input2"
+            v-model="takeNumber"
             class="width400px"
           >
             <template slot="append"
@@ -25,6 +25,7 @@
             class="btn-search"
             type="text"
             icon="el-icon-refresh-right"
+            @click="search()"
           ></el-button>
         </div>
       </el-row>
@@ -115,7 +116,10 @@
           class="order-detail-section"
         >
           <div class="checkbox">
-            <el-checkbox v-model="checked"></el-checkbox>
+            <el-checkbox
+              @change="handleSingleSelect"
+              v-model="docItem.checked"
+            ></el-checkbox>
           </div>
           <div class="margin-left10px">
             <img :src="require('../../assets/word.png')" alt="" />
@@ -138,12 +142,15 @@
         <div slot="footer" class="dialog-footer">
           <el-row>
             <el-col :span="12">
-              <el-checkbox class="selectAll" v-model="selectAll"
+              <el-checkbox
+                class="selectAll"
+                v-model="selectAll"
+                @change="handleSelectAll"
                 >全选</el-checkbox
               >
             </el-col>
             <el-col :span="12">
-              <el-button class="btn-download" @click="dialogDownload = false"
+              <el-button class="btn-download" @click="handleDownloadDoc"
                 >下载</el-button
               >
             </el-col>
@@ -166,6 +173,7 @@ import { color } from "echarts";
 export default {
   data() {
     return {
+      takeNumber: "",
       enums: enums,
       showReminder: false,
       checked: false,
@@ -187,13 +195,14 @@ export default {
         .getOrder({
           pageIndex: 1,
           pageSize: 100,
-          orderStatus: [6],
+          orderStatus: [5],
         })
         .then((res) => {
-          debugger;
           this.totalNumber = res.totalNumber;
           if (this.totalNumber > 0) {
             this.hasOrder = true;
+          } else {
+            this.hasOrder = false;
           }
           this.orderList = res.result;
         });
@@ -204,24 +213,56 @@ export default {
     async handlePrint() {
       console.log("handlePrint");
     },
-    async handleDownload(item) {
-      this.downloadDocList = item.printDocModels;
-      this.dialogDownload = true;
-    },
     async handleFolder() {
       console.log("handleFolder");
     },
-    download() {
-      this.downloadList.forEach((d) => {
-        debugger;
-        if (d.checked) {
-          var elemIF = document.createElement("iframe");
-          elemIF.src = d.url;
-          elemIF.style.display = "none";
-          document.body.appendChild(elemIF);
-        }
+    async handleDownload(item) {
+      this.selectAll = false;
+      this.downloadDocList = item.printDocModels;
+      this.downloadDocList.forEach((item) => {
+        this.$set(item, "checked", false);
       });
+      this.dialogDownload = true;
+    },
+    async handleDownloadDoc() {
       this.dialogDownload = false;
+      this.downloadDocList
+        .filter((d) => d.checked)
+        .forEach((item) => {
+          this.downloadFile(item.url);
+        });
+    },
+    handleSingleSelect() {
+      if (
+        this.downloadDocList.filter((item) => item.checked).length ==
+        this.downloadDocList.length
+      ) {
+        this.selectAll = true;
+      } else {
+        this.selectAll = false;
+      }
+    },
+    handleSelectAll() {
+      debugger;
+      if (this.selectAll) {
+        this.downloadDocList.forEach((item) => {
+          item.checked = true;
+        });
+      } else {
+        this.downloadDocList.forEach((item) => {
+          item.checked = false;
+        });
+      }
+    },
+    downloadFile(path) {
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.style.height = 0;
+      iframe.src = path;
+      document.body.appendChild(iframe);
+      setTimeout(() => {
+        iframe.remove();
+      }, 5 * 60 * 1000);
     },
     fileChange(e) {
       try {
