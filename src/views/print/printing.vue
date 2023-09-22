@@ -3,7 +3,9 @@
     <div class="padding20px">
       <span class="todo-order">正在打印订单</span
       ><span class="todo-count"> 共{{ totalNumber }}个</span>
-      <i class="el-icon-refresh-right float-right"></i>
+      <el-button @click="handleSearch" class="btn-search" type="text"
+        ><i class="el-icon-refresh-right"></i
+      ></el-button>
     </div>
     <div v-show="hasOrder">
       <div v-for="item in orderList" :key="item.orderId">
@@ -118,10 +120,9 @@ export default {
         .getOrder({
           pageIndex: 1,
           pageSize: 100,
-          orderStatus: [0],
+          orderStatus: [1],
         })
         .then((res) => {
-          debugger;
           this.totalNumber = res.totalNumber;
           if (this.totalNumber > 0) {
             this.hasOrder = true;
@@ -129,6 +130,9 @@ export default {
           this.orderList = res.result;
           this.downloadFile();
         });
+    },
+    handleSearch() {
+      this.search();
     },
     handlePause() {
       console.log("handlePause");
@@ -387,6 +391,12 @@ export default {
 .btn-download {
   background-color: #40db98;
   color: #ffffff;
+  float: right;
+}
+.btn-search {
+  font-size: 20px;
+  margin-left: 10px;
+  color: #1f1f1f;
   float: right;
 }
 </style>

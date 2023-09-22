@@ -179,17 +179,7 @@ export default {
     };
   },
   created() {
-    //printWorld = GetPrintWorld();
     this.search();
-    // var arr = [
-    //   { url: "http://43.142.4.18:8011/data/test2.xlsx", name: "1" },
-    //   { url: "http://43.142.4.18:8011/data/test.docx", name: "2" },
-    // ];
-    // arr.forEach((item) => {
-    //   debugger;
-    //   this.downloadFile(item.url);
-    // });
-    //this.downloadFile()
   },
   methods: {
     async search() {
@@ -226,6 +216,7 @@ export default {
       this.downloadDocList
         .filter((d) => d.checked)
         .forEach((item) => {
+          //this.downloadtest(item.url);
           this.downloadFile(item.url);
         });
     },
@@ -243,7 +234,6 @@ export default {
       }
     },
     handleSelectAll() {
-      debugger;
       if (this.selectAll) {
         this.downloadDocList.forEach((item) => {
           item.checked = true;
@@ -255,6 +245,7 @@ export default {
       }
     },
     downloadFile(path) {
+      debugger;
       const iframe = document.createElement("iframe");
       iframe.style.display = "none";
       iframe.style.height = 0;
@@ -321,6 +312,24 @@ export default {
         });
       });
       //printWorld.Act(json);
+    },
+    // 判断本地是否有该文件
+    isExistFile(url) {
+      // 判断结果
+      let result = false;
+      url = "./" + url;
+      // 获取该目录下所有文件名
+      const files = require.context("C:\\Users\\stephen.luo\\Downloads");
+      console.log(files.keys());
+      const filedata = files.keys();
+      // 判断是否有该文件
+      filedata.forEach((item) => {
+        if (item === url) {
+          result = true;
+        }
+      });
+      // 返回结果
+      return result;
     },
     // 打印
     print() {
