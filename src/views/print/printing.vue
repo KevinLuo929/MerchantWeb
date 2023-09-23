@@ -48,9 +48,9 @@
                 </div>
               </div>
             </div>
-            <div class="reminder-container">
+            <div v-show="item.PrintMsg != null" class="reminder-container">
               <i class="el-icon-warning reminder-icon"></i>
-              <span class="reminder-label">黑白6号机正在打印中...</span>
+              <span class="reminder-label">{{ item.PrintMsg }}</span>
             </div>
           </div>
           <div class="order-footer">
@@ -93,7 +93,6 @@ import printerApi from "@/api/printer";
 import moment from "moment";
 import { enums } from "@/utils/common";
 let printWorld;
-let startTime;
 export default {
   data() {
     return {
@@ -105,13 +104,27 @@ export default {
       totalNumber: 0,
       orderList: [],
       moment,
+      printJson: {
+        action: "printfile",
+        format: "file_url", // pdf_url,word_url,excel_url,ppt_url
+        content: "https://www.webprintworld.com/download/master.pdf",
+        printer: "HP LaserJet Professional M1219nf MFP",
+        papersize: "9", //指定输出纸张类型。整数值，8为A3；9为A4；11为A5等等
+        orientation: "0", // 1，为纵向；2，为横向。缺省为0
+        colorful: "-1", // 2，彩色打印；1，黑白打印；-1，系统默认。缺省为-1
+        duplex: "1", // 1，不双面打印；2，双面打印，长边翻转；3，双面打印，短边翻转。缺省为1
+        copies: 1, // 打印份数，取值为大于等于1的整数，缺省为1。
+        pages2print: "1",
+        swap: false, //布尔类型，为true，则打印页面横向/纵向切换，即横向转纵向（纵向转横向）。缺省为false。
+        printtask: "",
+      },
     };
   },
   created() {
+    printWorld = GetPrintWorld();
     this.search();
-
-    // printWorld = GetPrintWorld();
     // this.getPrintList();
+    // this.getPrinterStatus();
     // this.FilePages();
   },
   methods: {
@@ -129,6 +142,7 @@ export default {
           }
           this.orderList = res.result;
           this.downloadFile();
+          this.autoPrint();
         });
     },
     handleRefresh() {
@@ -143,13 +157,89 @@ export default {
     downloadFile() {
       //todo
     },
-    updateOrderStatus(orderId, orderStatus) {
+    updateOrderStatus(orderId, orderStatus, docs) {
       printerApi
         .updateOrderStatus({
           orderId: orderId,
           orderStatus: orderStatus,
+          printDocs: docs,
         })
         .then((res) => {});
+    },
+    autoPrint() {
+      this.orderList.forEach((item) => {
+        item.printDocModels.forEach((doc) => {
+          this.printJson.content = doc.url;
+          this.printJson.papersize = doc.paperKind;
+          this.printJson.orientation = doc.pageOrientation;
+          this.printJson.colorful = doc.printColor;
+          this.printJson.duplex = doc.printDuplex;
+          this.printJson.copies = doc.copies;
+          //this.printJson.pages2print = this.getFormatPrintPage(doc.printPages);
+          this.printJson.pages2print = "1";
+          this.printJson.printtask = item.orderId + "|" + doc.id;
+          //this.print();
+        });
+      });
+    },
+    getFormatPrintPage(printPages) {
+      let result = "";
+      printPages = printPages.split("-");
+      for (let i = printPages[0]; i <= printPages[1]; i++) {
+        result = result + i + ",";
+      }
+      return result.substring(0, result.length - 1);
+    },
+    print() {
+      printWorld.CallbackOnPrintTaskStatus(this.Callback4PrintTaskStatus);
+      if (!printWorld.Act(this.printJson)) {
+        alert(printWorld.GetLastError());
+      }
+    },
+    Callback4PrintTaskStatus(json) {
+      var msg = "";
+      var printTask = json.printtask;
+      var orderId = printTask.split("|")[0];
+      var docId = printTask.split("|")[1];
+      var printingOrder = this.orderList.filter((o) => o.orderId == orderId);
+      switch (json.stage) {
+        case "starting": //打印任务已经提交给打天下
+          break;
+        case "printing": //打印中
+          debugger;
+          msg = "正在打印中...";
+          this.$set(printingOrder, "PrintMsg", msg);
+          console.log(printingOrder);
+          this.updateOrderStatus(orderId, printingOrder[0].orderStatus, [
+            {
+              docId: docId,
+              filePrintStatus: 2,
+            },
+          ]);
+          break;
+        case "jobending":
+          debugger;
+          this.updateOrderStatus(orderId, printingOrder[0].orderStatus, [
+            {
+              docId: docId,
+              filePrintStatus: 3,
+            },
+          ]);
+          alert("打印完毕或者打印任务被取消!");
+          break;
+        case "ending": //打印任务结束
+          if (json.jobstatustext != "") {
+            this.updateOrderStatus(orderId, printingOrder[0].orderStatus, [
+              {
+                docId: docId,
+                filePrintStatus: 4,
+              },
+            ]);
+          }
+          break;
+        default:
+          break;
+      }
     },
     // 获取打印机列表
     getPrintList() {
@@ -160,7 +250,6 @@ export default {
       };
       printWorld.CallbackOnPrinterList((list) => {
         this.printList = list.val;
-        // console.log(this.printList)
         this.printList.forEach((item) => {
           if (item.default) {
             this.form.printer = item.name;
@@ -169,50 +258,19 @@ export default {
       });
       printWorld.Act(json);
     },
-    // 打印
-    print() {
-      console.log("打印", this.form);
-      if (this.form.content == "") {
-        alert("请输入链接");
-        return;
-      }
-      printWorld.Act(this.form);
-    },
-    // 预览
-    preview() {
-      const json = { ...this.form, action: "previewfile" };
-      console.log("预览", this.form, json);
-      if (this.form.content == "") {
-        alert("请输入链接");
-        return;
-      }
-      printWorld.Act(json);
-    },
-    // 获取文件页数代码，如下，请参考：
-    FilePages() {
-      startTime = new Date().getTime();
+    //获取打印机状态
+    getPrinterStatus() {
       var json = {};
-      json.action = "filepages";
-      json.format = "pdf_url";
-      // json.content = "https://img.bazhuay.com/1690791455125.docx?doc-convert/preview";
-      // json.content = "https://www.webprintworld.com/download/master.pdf";
-      // json.content = "https://img.bazhuay.com/1691640429623_903.pdf";
-      json.content = "https://img.bazhuay.com/1691717961600_12.pdf";
-
-      console.log("json", json);
-      printWorld.CallbackOnFilePages(this.Callback4FilePages);
+      json.action = "prnstatus";
+      json.printer = "HP LaserJet Professional M1219nf MFP";
+      printWorld.CallbackOnPrinterStatus(this.printerStatus); //指定回调函数
       if (!printWorld.Act(json)) {
-        alert(printWorld.GetLastError());
+        //异步调用（发送JSON数据到）打天下打印服务器。
+        alert(printWorld.GetLastError()); //出错，显示错误信息。
       }
     },
-    Callback4FilePages(json) {
-      console.log("time=", new Date().getTime() - startTime);
-      console.log("printWorld.Callback4FilePages", json);
-      if (json.error == undefined) {
-        // alert(json.val); //json.val，页数
-      } else {
-        alert(json.error);
-      }
+    printerStatus(json) {
+      //如何从参数json中获取状态，参考后续代码说明。
     },
   },
 };

@@ -88,7 +88,7 @@
                 <span class="printer-type"></span>
               </div>
               <div class="operation-container">
-                <div @click="handlePrint" class="operation">
+                <div @click="handlePrint(item)" class="operation">
                   <img src="../../assets/printer.png" alt="" />
                 </div>
                 <div @click="handleDownload(item)" class="operation">
@@ -176,6 +176,7 @@
 import printerApi from "@/api/printer";
 import moment from "moment";
 import { enums } from "@/utils/common";
+let printWorld;
 export default {
   data() {
     return {
@@ -190,14 +191,28 @@ export default {
       moment,
       orderList: [],
       downloadDocList: [],
+      printJson: {
+        action: "printfile",
+        format: "file_url", // pdf_url,word_url,excel_url,ppt_url
+        content: "https://www.webprintworld.com/download/master.pdf",
+        printer: "HP LaserJet Professional M1219nf MFP",
+        papersize: "9", //指定输出纸张类型。整数值，8为A3；9为A4；11为A5等等
+        orientation: "0", // 1，为纵向；2，为横向。缺省为0
+        colorful: "-1", // 2，彩色打印；1，黑白打印；-1，系统默认。缺省为-1
+        duplex: "1", // 1，不双面打印；2，双面打印，长边翻转；3，双面打印，短边翻转。缺省为1
+        copies: 1, // 打印份数，取值为大于等于1的整数，缺省为1。
+        pages2print: "1",
+        swap: false, //布尔类型，为true，则打印页面横向/纵向切换，即横向转纵向（纵向转横向）。缺省为false。
+        printtask: "",
+      },
     };
   },
   created() {
-    debugger;
-    this.downloadFile(
-      "http://43.142.4.18:8011/data/IFB-Job24-10_Appendix_A.pdf"
-    );
+    // this.downloadFile(
+    //   "http://43.142.4.18:8011/data/IFB-Job24-10_Appendix_A.pdf"
+    // );
     this.search();
+    printWorld = GetPrintWorld();
   },
   methods: {
     async search() {
@@ -223,8 +238,57 @@ export default {
     handleRefresh() {
       this.search();
     },
-    async handlePrint() {
-      console.log("handlePrint");
+    async handlePrint(item) {
+      item.printDocModels.forEach((d) => {
+        debugger;
+        this.printJson.content = d.url;
+        this.printJson.papersize = d.paperKind;
+        this.printJson.orientation = d.pageOrientation;
+        this.printJson.colorful = d.printColor;
+        this.printJson.duplex = d.printDuplex;
+        this.printJson.copies = d.copies;
+        //this.printJson.pages2print = this.getFormatPrintPage(d.printPages);
+        this.printJson.pages2print = "1";
+        this.printJson.printtask = item.orderId;
+        this.print();
+      });
+    },
+    print() {
+      printWorld.CallbackOnPrintTaskStatus(this.Callback4PrintTaskStatus);
+      if (!printWorld.Act(this.printJson)) {
+        alert(printWorld.GetLastError());
+      }
+    },
+    Callback4PrintTaskStatus(json) {
+      var msg = "";
+      switch (json.stage) {
+        case "starting": //打印任务已经提交给打天下
+          break;
+        case "printing": //打印中
+          msg = "printing";
+          console.log(msg);
+          break;
+        case "jobending": //一个打印Job结束，有两种情况：1、Job打印完毕；2、打印Job被人为取消或删除。换句话所说，如果没有人为取消打印操作，则打印成功完成。
+          debugger;
+          alert("打印完毕或者打印任务被取消!");
+          break;
+        case "ending": //打印任务结束
+          if (json.jobstatustext != "") {
+            //说明打印准备过程中出错，由于并没有真正启动打印，这种情况不会有"printing"和"jobending"这两个阶段出现。
+            alert(json.jobstatustext);
+          }
+          break;
+        default:
+          break;
+      }
+    },
+    getFormatPrintPage(printPages) {
+      let result = "";
+      printPages = printPages.split("-");
+      for (let i = printPages[0]; i <= printPages[1]; i++) {
+        result = result + i + ",";
+      }
+      return result.substring(0, result.length - 1);
     },
     async handleFolder() {
       console.log("handleFolder");
@@ -291,20 +355,6 @@ export default {
     btnChange() {
       var file = document.getElementById("file");
       file.click();
-    },
-  },
-  computed: {
-    allSelected: {
-      get() {
-        return this.downloadDocList.every((i) => {
-          return i.checked;
-        });
-      },
-      set(isCheck) {
-        this.downloadDocList.forEach((t) => {
-          t.checked = isCheck;
-        });
-      },
     },
   },
 };
