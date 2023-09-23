@@ -104,27 +104,7 @@ const http = {
     });
   },
   getRestApi(url, params) {
-    let _params;
-    if (Object.is(params, undefined || null)) {
-      _params = "";
-    } else {
-      _params = "/";
-      for (const key in params) {
-        if (
-          params.hasOwnProperty(key) &&
-          params[key] !== null &&
-          params[key] !== ""
-        ) {
-          _params += `${params[key]}/`;
-        }
-      }
-      _params = _params.substr(0, _params.length - 1);
-    }
-    if (_params) {
-      return service.get(`${url}${_params}`);
-    } else {
-      return service.get(url);
-    }
+    return service.get(`${url}/${params}`);
   },
   delete(url, params) {
     return service.delete(`${url}/${params}`).catch((err) => {

@@ -3,7 +3,7 @@
     <div class="padding20px">
       <span class="todo-order">正在打印订单</span
       ><span class="todo-count"> 共{{ totalNumber }}个</span>
-      <el-button @click="handleSearch" class="btn-search" type="text"
+      <el-button @click="handleRefresh" class="btn-search" type="text"
         ><i class="el-icon-refresh-right"></i
       ></el-button>
     </div>
@@ -131,7 +131,7 @@ export default {
           this.downloadFile();
         });
     },
-    handleSearch() {
+    handleRefresh() {
       this.search();
     },
     handlePause() {
@@ -141,28 +141,15 @@ export default {
       this.dialogDownload = true;
     },
     downloadFile() {
-      this.orderList.forEach((d) => {
-        d.printDocModels.forEach((m) => {
-          var elemIF = document.createElement("iframe");
-          elemIF.src = m.url;
-          elemIF.style.display = "none";
-          document.body.appendChild(elemIF);
-        });
-        updateOrderStatus(
-          this.orderList
-            .filter((f) => {
-              return f.orderId == d.orderId;
-            })
-            .map((m) => ({
-              orderId: m.orderId,
-              orderStatus: 3,
-              printDocs: m.printDocModels,
-            }))
-        );
-      });
+      //todo
     },
-    updateOrderStatus(params) {
-      printerApi.updateOrderStatus(params).then((res) => {});
+    updateOrderStatus(orderId, orderStatus) {
+      printerApi
+        .updateOrderStatus({
+          orderId: orderId,
+          orderStatus: orderStatus,
+        })
+        .then((res) => {});
     },
     // 获取打印机列表
     getPrintList() {

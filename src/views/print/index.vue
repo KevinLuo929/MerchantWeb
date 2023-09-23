@@ -75,7 +75,14 @@
                   <img src="../../assets/folder_download.png" alt="" />
                 </div>
                 <div @click="handleFolder" class="operation">
-                  <input type="file" id="file" hidden @change="fileChange" />
+                  <input
+                    type="file"
+                    id="file"
+                    hidden
+                    @change="fileChange"
+                    name="files[]"
+                    multiple
+                  />
                   <img
                     src="../../assets/folder.png"
                     @click="btnChange"
@@ -216,8 +223,9 @@ export default {
       this.downloadDocList
         .filter((d) => d.checked)
         .forEach((item) => {
-          //this.downloadtest(item.url);
-          this.downloadFile(item.url);
+          debugger;
+          this.downloadTest(item.url);
+          //this.downloadFile(item.url);
         });
     },
     async handleFolder() {
@@ -244,8 +252,49 @@ export default {
         });
       }
     },
+    downloadTest(url) {
+      // 获取下载按钮
+      //const downloadButton = document.getElementById("downloadButton");
+
+      // 文件的URL
+      // const fileUrl =
+      //   "https://www.runoob.com/wp-content/uploads/2013/06/image-icon.png";
+      const fileUrl = url;
+      // 使用XMLHttpRequest下载文件
+      const xhr = new XMLHttpRequest();
+      xhr.responseType = "blob"; // 将响应类型设置为Blob
+
+      xhr.onload = function () {
+        debugger;
+        if (xhr.status === 200) {
+          // 创建一个Blob URL，用于下载
+          const blobUrl = URL.createObjectURL(xhr.response);
+
+          // 创建一个下载链接
+          const downloadLink = document.createElement("a");
+          downloadLink.href = blobUrl;
+          downloadLink.download = "sample.png";
+          downloadLink.style.display = "none";
+
+          // 将下载链接添加到文档中
+          document.body.appendChild(downloadLink);
+
+          // 模拟点击下载链接
+          downloadLink.click();
+
+          // 下载完成后触发通知
+          //showNotification("文件下载已完成！");
+          alert("文件下载已完成！");
+        } else {
+          alert("文件下载失败！");
+        }
+      };
+
+      // 发送GET请求以下载文件
+      xhr.open("GET", fileUrl);
+      xhr.send();
+    },
     downloadFile(path) {
-      debugger;
       const iframe = document.createElement("iframe");
       iframe.style.display = "none";
       iframe.style.height = 0;
@@ -286,7 +335,7 @@ export default {
         debugger;
         const file = document.getElementById("file");
         if (file == null) return;
-        console.log(file.files[0].path);
+        console.log(file);
       } catch (error) {
         console.debug("choice file err:", error);
       }
@@ -312,24 +361,6 @@ export default {
         });
       });
       //printWorld.Act(json);
-    },
-    // 判断本地是否有该文件
-    isExistFile(url) {
-      // 判断结果
-      let result = false;
-      url = "./" + url;
-      // 获取该目录下所有文件名
-      const files = require.context("C:\\Users\\stephen.luo\\Downloads");
-      console.log(files.keys());
-      const filedata = files.keys();
-      // 判断是否有该文件
-      filedata.forEach((item) => {
-        if (item === url) {
-          result = true;
-        }
-      });
-      // 返回结果
-      return result;
     },
     // 打印
     print() {

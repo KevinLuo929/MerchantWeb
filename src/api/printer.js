@@ -8,6 +8,6 @@ export default {
     return await http.put("/api/PrintOrder/UpdateStatus", params);
   },
   async getOrderByTakeNumber(params) {
-    return await http.getRestApi("/api/PrintOrder/", params);
+    return await http.getRestApi("/api/PrintOrder", params);
   },
 };

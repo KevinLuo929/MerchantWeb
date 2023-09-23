@@ -25,7 +25,7 @@
             class="btn-search"
             type="text"
             icon="el-icon-refresh-right"
-            @click="search()"
+            @click="handleRefresh()"
           ></el-button>
         </div>
       </el-row>
@@ -95,7 +95,14 @@
                   <img src="../../assets/folder_download.png" alt="" />
                 </div>
                 <div @click="handleFolder" class="operation">
-                  <input type="file" id="file" hidden @change="fileChange" />
+                  <input
+                    type="file"
+                    id="file"
+                    hidden
+                    name="files[]"
+                    multiple
+                    @change="fileChange"
+                  />
                   <img
                     src="../../assets/folder.png"
                     @click="btnChange"
@@ -169,7 +176,6 @@
 import printerApi from "@/api/printer";
 import moment from "moment";
 import { enums } from "@/utils/common";
-import { color } from "echarts";
 export default {
   data() {
     return {
@@ -187,6 +193,10 @@ export default {
     };
   },
   created() {
+    debugger;
+    this.downloadFile(
+      "http://43.142.4.18:8011/data/IFB-Job24-10_Appendix_A.pdf"
+    );
     this.search();
   },
   methods: {
@@ -208,6 +218,9 @@ export default {
         });
     },
     handleSearch() {
+      printerApi.getOrderByTakeNumber(this.takeNumber).then((res) => {});
+    },
+    handleRefresh() {
       this.search();
     },
     async handlePrint() {
@@ -254,12 +267,13 @@ export default {
         });
       }
     },
-    downloadFile(path) {
+    downloadFile(url) {
       const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      iframe.style.height = 0;
-      iframe.src = path;
-      document.body.appendChild(iframe);
+      iframe.style.display = "none"; // 防止影响页面
+      iframe.style.height = 0; // 防止影响页面
+      iframe.src = url;
+      document.body.appendChild(iframe); // 这一行必须，iframe挂在到dom树上才会发请求
+      // 5分钟之后删除（onload方法对于下载链接不起作用，就先抠脚一下吧）
       setTimeout(() => {
         iframe.remove();
       }, 5 * 60 * 1000);
@@ -269,7 +283,7 @@ export default {
         debugger;
         const file = document.getElementById("file");
         if (file == null) return;
-        console.log(file.files[0].path);
+        console.log(file);
       } catch (error) {
         console.debug("choice file err:", error);
       }
