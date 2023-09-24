@@ -169,7 +169,6 @@
 import printerApi from "@/api/printer";
 import moment from "moment";
 import { enums } from "@/utils/common";
-import { color } from "echarts";
 export default {
   data() {
     return {

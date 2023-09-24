@@ -91,7 +91,7 @@
                 <div @click="handlePrint(item)" class="operation">
                   <img src="../../assets/printer.png" alt="" />
                 </div>
-                <div @click="handleDownload(item)" class="operation">
+                <div @click="handleShowDownloadDialog(item)" class="operation">
                   <img src="../../assets/folder_download.png" alt="" />
                 </div>
                 <div @click="handleFolder" class="operation">
@@ -176,7 +176,55 @@
 import printerApi from "@/api/printer";
 import moment from "moment";
 import { enums } from "@/utils/common";
+
 let printWorld;
+var prnStatusCollect = {
+  //打印机状态集合
+  PRINTER_STATUS_PAUSED: 0x00000001,
+  PRINTER_STATUS_ERROR: 0x00000002,
+  PRINTER_STATUS_PENDING_DELETION: 0x00000004,
+  PRINTER_STATUS_PAPER_JAM: 0x00000008,
+  PRINTER_STATUS_PAPER_OUT: 0x00000010,
+  PRINTER_STATUS_MANUAL_FEED: 0x00000020,
+  PRINTER_STATUS_PAPER_PROBLEM: 0x00000040,
+  PRINTER_STATUS_OFFLINE: 0x00000080,
+  PRINTER_STATUS_IO_ACTIVE: 0x00000100,
+  PRINTER_STATUS_BUSY: 0x00000200,
+  PRINTER_STATUS_PRINTING: 0x00000400,
+  PRINTER_STATUS_OUTPUT_BIN_FULL: 0x00000800,
+  PRINTER_STATUS_NOT_AVAILABLE: 0x00001000,
+  PRINTER_STATUS_WAITING: 0x00002000,
+  PRINTER_STATUS_PROCESSING: 0x00004000,
+  PRINTER_STATUS_INITIALIZING: 0x00008000,
+  PRINTER_STATUS_WARMING_UP: 0x00010000,
+  PRINTER_STATUS_TONER_LOW: 0x00020000,
+  PRINTER_STATUS_NO_TONER: 0x00040000,
+  PRINTER_STATUS_PAGE_PUNT: 0x00080000,
+  PRINTER_STATUS_USER_INTERVENTION: 0x00100000,
+  PRINTER_STATUS_OUT_OF_MEMORY: 0x00200000,
+  PRINTER_STATUS_DOOR_OPEN: 0x00400000,
+  PRINTER_STATUS_SERVER_UNKNOWN: 0x00800000,
+  PRINTER_STATUS_POWER_SAVE: 0x01000000,
+  PRINTER_STATUS_SERVER_OFFLINE: 0x02000000,
+  PRINTER_STATUS_DRIVER_UPDATE_NEEDED: 0x04000000,
+};
+var jobStatusCollect = {
+  //打印Job状态集合
+  JOB_STATUS_BLOCKED_DEVQ: 0x00000200, //The driver cannot print the job.
+  JOB_STATUS_COMPLETE: 0x00001000, //Windows XP and later: Job is sent to the printer, but the job may not be printed yet.
+  JOB_STATUS_DELETED: 0x00000100, //Job has been deleted.
+  JOB_STATUS_DELETING: 0x00000004, //Job is being deleted.
+  JOB_STATUS_ERROR: 0x00000002, //An error is associated with the job.
+  JOB_STATUS_OFFLINE: 0x00000020, //Printer is offline.
+  JOB_STATUS_PAPEROUT: 0x00000040, //Printer is out of paper.
+  JOB_STATUS_PAUSED: 0x00000001, //Job is paused.
+  JOB_STATUS_PRINTED: 0x00000080, //Job has printed.
+  JOB_STATUS_PRINTING: 0x00000010, //Job is printing.
+  JOB_STATUS_RESTART: 0x00000800, //Job has been restarted.
+  JOB_STATUS_RETAINED: 0x00002000, //Windows Vista and later: Job has been retained in the print queue and cannot be deleted.
+  JOB_STATUS_SPOOLING: 0x00000008, //Job is spooling.
+  JOB_STATUS_USER_INTERVENTION: 0x00000400, //Printer has an error that requires the user to do something.
+};
 export default {
   data() {
     return {
@@ -208,15 +256,12 @@ export default {
     };
   },
   created() {
-    // this.downloadFile(
-    //   "http://43.142.4.18:8011/data/IFB-Job24-10_Appendix_A.pdf"
-    // );
-    this.search();
     printWorld = GetPrintWorld();
+    this.search();
   },
   methods: {
     async search() {
-      let res = printerApi
+      printerApi
         .getOrder({
           pageIndex: 1,
           pageSize: 100,
@@ -240,7 +285,6 @@ export default {
     },
     async handlePrint(item) {
       item.printDocModels.forEach((d) => {
-        debugger;
         this.printJson.content = d.url;
         this.printJson.papersize = d.paperKind;
         this.printJson.orientation = d.pageOrientation;
@@ -256,26 +300,42 @@ export default {
     print() {
       printWorld.CallbackOnPrintTaskStatus(this.Callback4PrintTaskStatus);
       if (!printWorld.Act(this.printJson)) {
-        alert(printWorld.GetLastError());
+        this.$message.error("打印失败：" + printWorld.GetLastError());
       }
     },
     Callback4PrintTaskStatus(json) {
       var msg = "";
       switch (json.stage) {
-        case "starting": //打印任务已经提交给打天下
+        case "starting":
           break;
-        case "printing": //打印中
-          msg = "printing";
-          console.log(msg);
+        case "printing":
+          msg = "";
+          if (json.jobstatus == 0) {
+            msg +=
+              "The print queue was paused after the document finished spooling.\n";
+          } else if (json.jobstatus & jobStatusCollect.JOB_STATUS_ERROR) {
+            msg += "An error is associated with the job.\n";
+          }
+
+          if (json.prnstatus & prnStatusCollect.PRINTER_STATUS_PAPER_OUT) {
+            msg += "缺纸";
+          }
+          if (json.prnstatus & prnStatusCollect.PRINTER_STATUS_PAPER_JAM) {
+            msg += "卡纸";
+          }
+          if (msg != "") {
+            this.$message.error("打印失败：" + msg);
+          }
           break;
-        case "jobending": //一个打印Job结束，有两种情况：1、Job打印完毕；2、打印Job被人为取消或删除。换句话所说，如果没有人为取消打印操作，则打印成功完成。
-          debugger;
-          alert("打印完毕或者打印任务被取消!");
+        case "jobending":
+          this.$message({
+            message: "打印成功",
+            type: "success",
+          });
           break;
-        case "ending": //打印任务结束
+        case "ending":
           if (json.jobstatustext != "") {
-            //说明打印准备过程中出错，由于并没有真正启动打印，这种情况不会有"printing"和"jobending"这两个阶段出现。
-            alert(json.jobstatustext);
+            this.$message.error("打印失败！");
           }
           break;
         default:
@@ -293,7 +353,7 @@ export default {
     async handleFolder() {
       console.log("handleFolder");
     },
-    async handleDownload(item) {
+    async handleShowDownloadDialog(item) {
       this.selectAll = false;
       this.downloadDocList = item.printDocModels;
       this.downloadDocList.forEach((item) => {
@@ -309,6 +369,29 @@ export default {
           this.downloadFile(item.url);
         });
     },
+    downloadFile(blob, filename) {
+      // debugger;
+      // var downloadLink = document.createElement("a");
+      // downloadLink.style.display = "none";
+      // document.body.appendChild(downloadLink);
+      // // 设置下载链接
+      // downloadLink.href = url;
+      // // 设置文件名（可选）
+      // downloadLink.download = url.substring(url.lastIndexOf("/") + 1);
+      // // 模拟点击下载链接
+      // downloadLink.click();
+      // // 移除下载链接元素
+      // document.body.removeChild(downloadLink);
+      const a = document.createElement("a");
+      document.body.appendChild(a);
+      a.style.display = "none";
+      const url = window.URL.createObjectURL(blob);
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    },
     handleSingleSelect() {
       if (
         this.downloadDocList.filter((item) => item.checked).length ==
@@ -320,7 +403,6 @@ export default {
       }
     },
     handleSelectAll() {
-      debugger;
       if (this.selectAll) {
         this.downloadDocList.forEach((item) => {
           item.checked = true;
@@ -331,20 +413,9 @@ export default {
         });
       }
     },
-    downloadFile(url) {
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none"; // 防止影响页面
-      iframe.style.height = 0; // 防止影响页面
-      iframe.src = url;
-      document.body.appendChild(iframe); // 这一行必须，iframe挂在到dom树上才会发请求
-      // 5分钟之后删除（onload方法对于下载链接不起作用，就先抠脚一下吧）
-      setTimeout(() => {
-        iframe.remove();
-      }, 5 * 60 * 1000);
-    },
+
     fileChange(e) {
       try {
-        debugger;
         const file = document.getElementById("file");
         if (file == null) return;
         console.log(file);

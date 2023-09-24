@@ -69,7 +69,7 @@
                 <span class="printer-type"></span>
               </div>
               <div class="operation-container">
-                <div @click="handlePause" class="operation">
+                <div @click="handlePause(item)" class="operation">
                   <img src="../../assets/pause.png" alt="" />
                 </div>
                 <!-- <div @click="handleRunning" class="operation">
@@ -90,6 +90,7 @@
   
   <script>
 import printerApi from "@/api/printer";
+import settingApi from "@/api/setting";
 import moment from "moment";
 import { enums } from "@/utils/common";
 let printWorld;
@@ -107,8 +108,8 @@ export default {
       printJson: {
         action: "printfile",
         format: "file_url", // pdf_url,word_url,excel_url,ppt_url
-        content: "https://www.webprintworld.com/download/master.pdf",
-        printer: "HP LaserJet Professional M1219nf MFP",
+        content: "",
+        printer: "",
         papersize: "9", //指定输出纸张类型。整数值，8为A3；9为A4；11为A5等等
         orientation: "0", // 1，为纵向；2，为横向。缺省为0
         colorful: "-1", // 2，彩色打印；1，黑白打印；-1，系统默认。缺省为-1
@@ -118,6 +119,8 @@ export default {
         swap: false, //布尔类型，为true，则打印页面横向/纵向切换，即横向转纵向（纵向转横向）。缺省为false。
         printtask: "",
       },
+      printerList: [],
+      defaultPrinter: "",
     };
   },
   created() {
@@ -136,20 +139,37 @@ export default {
           orderStatus: [1],
         })
         .then((res) => {
+          debugger;
           this.totalNumber = res.totalNumber;
           if (this.totalNumber > 0) {
             this.hasOrder = true;
+          } else {
+            this.hasOrder = false;
           }
           this.orderList = res.result;
           this.downloadFile();
           this.autoPrint();
         });
     },
+    getPrinter() {
+      settingApi.getPrinterSettingsData().then((res) => {
+        // let priorityPrinter = res.filter((p) => p.isPriority);
+        // if ((priorityPrinter.length = 0)) {
+        //   this.defaultPrinter =
+        //     res[Math.floor(Math.random() * res.length)].printerName;
+        // } else {
+        //   this.defaultPrinter = priorityPrinter[0].printerName;
+        // }
+        this.defaultPrinter =
+          res[Math.floor(Math.random() * res.length)].printerName;
+      });
+    },
     handleRefresh() {
       this.search();
     },
-    handlePause() {
+    handlePause(item) {
       console.log("handlePause");
+      debugger;
     },
     async handleRunning() {
       this.dialogDownload = true;
@@ -167,8 +187,11 @@ export default {
         .then((res) => {});
     },
     autoPrint() {
+      debugger;
       this.orderList.forEach((item) => {
         item.printDocModels.forEach((doc) => {
+          //this.printJson.printer=this.defaultPrinter;
+          this.printJson.printer = "HP LaserJet Professional M1219nf MFP";
           this.printJson.content = doc.url;
           this.printJson.papersize = doc.paperKind;
           this.printJson.orientation = doc.pageOrientation;
@@ -191,6 +214,7 @@ export default {
       return result.substring(0, result.length - 1);
     },
     print() {
+      debugger;
       printWorld.CallbackOnPrintTaskStatus(this.Callback4PrintTaskStatus);
       if (!printWorld.Act(this.printJson)) {
         alert(printWorld.GetLastError());
@@ -207,9 +231,12 @@ export default {
           break;
         case "printing": //打印中
           debugger;
-          msg = "正在打印中...";
-          this.$set(printingOrder, "PrintMsg", msg);
-          console.log(printingOrder);
+          msg = json.printer + "正在打印中...";
+          this.orderList.forEach((p) => {
+            if (p.orderId == orderId) {
+              this.$set(p, "PrintMsg", msg);
+            }
+          });
           this.updateOrderStatus(orderId, printingOrder[0].orderStatus, [
             {
               docId: docId,
@@ -225,11 +252,32 @@ export default {
               filePrintStatus: 3,
             },
           ]);
-          alert("打印完毕或者打印任务被取消!");
+          var finishedDocCount = printingOrder[0].printDocModels.filter(
+            (doc) => doc.filePrintStatus == 3
+          ).length;
+          var totalDocCount = printingOrder[0].printDocModels.length;
+          if (finishedDocCount == totalDocCount) {
+            this.updateOrderStatus(orderId, 5, []);
+            this.$message({
+              message: "打印成功",
+              type: "success",
+            });
+            this.orderList.map((item, index) => {
+              if (item.orderId == orderId) {
+                this.orderList.splice(index, 1);
+              }
+            });
+            this.totalNumber = this.orderList.length;
+            if (this.totalNumber > 0) {
+              this.hasOrder = true;
+            } else {
+              this.hasOrder = false;
+            }
+          }
           break;
         case "ending": //打印任务结束
           if (json.jobstatustext != "") {
-            this.updateOrderStatus(orderId, printingOrder[0].orderStatus, [
+            this.updateOrderStatus(orderId, 6, [
               {
                 docId: docId,
                 filePrintStatus: 4,
