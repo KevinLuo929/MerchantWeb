@@ -174,6 +174,7 @@
     
     <script>
 import printerApi from "@/api/printer";
+import settingApi from "@/api/setting";
 import moment from "moment";
 import { enums } from "@/utils/common";
 
@@ -242,15 +243,15 @@ export default {
       printJson: {
         action: "printfile",
         format: "file_url", // pdf_url,word_url,excel_url,ppt_url
-        content: "https://www.webprintworld.com/download/master.pdf",
+        content: "",
         printer: "HP LaserJet Professional M1219nf MFP",
-        papersize: "9", //指定输出纸张类型。整数值，8为A3；9为A4；11为A5等等
-        orientation: "0", // 1，为纵向；2，为横向。缺省为0
-        colorful: "-1", // 2，彩色打印；1，黑白打印；-1，系统默认。缺省为-1
-        duplex: "1", // 1，不双面打印；2，双面打印，长边翻转；3，双面打印，短边翻转。缺省为1
-        copies: 1, // 打印份数，取值为大于等于1的整数，缺省为1。
+        papersize: "9",
+        orientation: "0",
+        colorful: "-1",
+        duplex: "1",
+        copies: 1,
         pages2print: "1",
-        swap: false, //布尔类型，为true，则打印页面横向/纵向切换，即横向转纵向（纵向转横向）。缺省为false。
+        swap: false,
         printtask: "",
       },
     };
@@ -282,6 +283,19 @@ export default {
     },
     handleRefresh() {
       this.search();
+    },
+    getPrinter() {
+      settingApi.getPrinterSettingsData().then((res) => {
+        // let priorityPrinter = res.filter((p) => p.isPriority);
+        // if ((priorityPrinter.length = 0)) {
+        //   this.defaultPrinter =
+        //     res[Math.floor(Math.random() * res.length)].printerName;
+        // } else {
+        //   this.defaultPrinter = priorityPrinter[0].printerName;
+        // }
+        this.defaultPrinter =
+          res[Math.floor(Math.random() * res.length)].printerName;
+      });
     },
     async handlePrint(item) {
       item.printDocModels.forEach((d) => {
@@ -369,28 +383,26 @@ export default {
           this.downloadFile(item.url);
         });
     },
-    downloadFile(blob, filename) {
-      // debugger;
-      // var downloadLink = document.createElement("a");
-      // downloadLink.style.display = "none";
-      // document.body.appendChild(downloadLink);
-      // // 设置下载链接
-      // downloadLink.href = url;
-      // // 设置文件名（可选）
-      // downloadLink.download = url.substring(url.lastIndexOf("/") + 1);
-      // // 模拟点击下载链接
-      // downloadLink.click();
-      // // 移除下载链接元素
-      // document.body.removeChild(downloadLink);
-      const a = document.createElement("a");
-      document.body.appendChild(a);
-      a.style.display = "none";
-      const url = window.URL.createObjectURL(blob);
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+    downloadFile(url) {
+      const fileUrl = url;
+      const xhr = new XMLHttpRequest();
+      xhr.responseType = "blob";
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          const blobUrl = URL.createObjectURL(xhr.response);
+          const downloadLink = document.createElement("a");
+          downloadLink.href = blobUrl;
+          downloadLink.download = "sample.png";
+          downloadLink.style.display = "none";
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          //alert("文件下载已完成！");
+        } else {
+          //alert("文件下载失败！");
+        }
+      };
+      xhr.open("GET", fileUrl);
+      xhr.send();
     },
     handleSingleSelect() {
       if (

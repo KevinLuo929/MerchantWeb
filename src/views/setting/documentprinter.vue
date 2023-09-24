@@ -194,6 +194,10 @@ export default {
       let res = settingApi.getPrinterSettingsData().then((res) => {
         this.printerList = res;
         this.printerCount = res.length;
+        this.printerList.forEach((item) => {
+          this.$set(item, "isEnabled", true);
+        });
+        console.log(this.printerList);
       });
     },
     showDeleteDialog(id) {
@@ -209,14 +213,11 @@ export default {
       this.isAdd = false;
       this.dialogVisible = true;
       this.form = Object.assign({}, row);
-      console.log(row);
-      //this.form.supportColor = "1";
     },
     handleDeletePrinter() {
       let res = settingApi
         .deletePrinterSettings(this.currentSelectedId)
         .then((res) => {
-          console.log(res);
           this.dialogDelete = false;
           this.$message({
             message: "删除成功",
@@ -258,7 +259,6 @@ export default {
       };
       printWorld.CallbackOnPrinterList((list) => {
         this.localPrinterList = list.val;
-        console.log(this.localPrinterList);
         // this.localPrinterList.forEach((item) => {
         //   if (item.default) {
         //     this.form.printer = item.name;

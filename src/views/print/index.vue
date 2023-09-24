@@ -68,7 +68,7 @@
                 <span class="printer-type"></span>
               </div>
               <div class="operation-container">
-                <div @click="handlePrint" class="operation">
+                <div @click="handlePrint(item)" class="operation">
                   <img src="../../assets/printer.png" alt="" />
                 </div>
                 <div @click="handleDownload(item)" class="operation">
@@ -167,6 +167,7 @@
 
 <script>
 import printerApi from "@/api/printer";
+import settingApi from "@/api/setting";
 import moment from "moment";
 import { enums } from "@/utils/common";
 export default {
@@ -182,6 +183,20 @@ export default {
       moment,
       orderList: [],
       downloadDocList: [],
+      printJson: {
+        action: "printfile",
+        format: "file_url",
+        content: "",
+        printer: "HP LaserJet Professional M1219nf MFP",
+        papersize: "9",
+        orientation: "0",
+        colorful: "-1",
+        duplex: "1",
+        copies: 1,
+        pages2print: "1",
+        swap: false,
+        printtask: "",
+      },
     };
   },
   created() {
@@ -206,8 +221,46 @@ export default {
     handleSearch() {
       this.search();
     },
-    async handlePrint() {
-      console.log("handlePrint");
+    getPrinter() {
+      settingApi.getPrinterSettingsData().then((res) => {
+        // let priorityPrinter = res.filter((p) => p.isPriority);
+        // if ((priorityPrinter.length = 0)) {
+        //   this.defaultPrinter =
+        //     res[Math.floor(Math.random() * res.length)].printerName;
+        // } else {
+        //   this.defaultPrinter = priorityPrinter[0].printerName;
+        // }
+        this.defaultPrinter =
+          res[Math.floor(Math.random() * res.length)].printerName;
+      });
+    },
+    async handlePrint(item) {
+      item.printDocModels.forEach((d) => {
+        this.printJson.content = d.url;
+        this.printJson.papersize = d.paperKind;
+        this.printJson.orientation = d.pageOrientation;
+        this.printJson.colorful = d.printColor;
+        this.printJson.duplex = d.printDuplex;
+        this.printJson.copies = d.copies;
+        //this.printJson.pages2print = this.getFormatPrintPage(d.printPages);
+        this.printJson.pages2print = "1";
+        this.printJson.printtask = item.orderId;
+        this.print();
+      });
+    },
+    print() {
+      printWorld.CallbackOnPrintTaskStatus(this.Callback4PrintTaskStatus);
+      if (!printWorld.Act(this.printJson)) {
+        this.$message.error("打印失败：" + printWorld.GetLastError());
+      }
+    },
+    getFormatPrintPage(printPages) {
+      let result = "";
+      printPages = printPages.split("-");
+      for (let i = printPages[0]; i <= printPages[1]; i++) {
+        result = result + i + ",";
+      }
+      return result.substring(0, result.length - 1);
     },
     async handleDownload(item) {
       this.selectAll = false;
@@ -217,14 +270,79 @@ export default {
       });
       this.dialogDownload = true;
     },
+    Callback4PrintTaskStatus(json) {
+      var msg = "";
+      var printTask = json.printtask;
+      var orderId = printTask.split("|")[0];
+      var docId = printTask.split("|")[1];
+      var printingOrder = this.orderList.filter((o) => o.orderId == orderId);
+      switch (json.stage) {
+        case "starting":
+          break;
+        case "printing":
+          // msg = json.printer + "正在打印中...";
+          // this.orderList.forEach((p) => {
+          //   if (p.orderId == orderId) {
+          //     this.$set(p, "PrintMsg", msg);
+          //   }
+          // });
+          this.updateOrderStatus(orderId, printingOrder[0].orderStatus, [
+            {
+              docId: docId,
+              filePrintStatus: 2,
+            },
+          ]);
+          break;
+        case "jobending":
+          this.updateOrderStatus(orderId, printingOrder[0].orderStatus, [
+            {
+              docId: docId,
+              filePrintStatus: 3,
+            },
+          ]);
+          var finishedDocCount = printingOrder[0].printDocModels.filter(
+            (doc) => doc.filePrintStatus == 3
+          ).length;
+          var totalDocCount = printingOrder[0].printDocModels.length;
+          if (finishedDocCount == totalDocCount) {
+            this.updateOrderStatus(orderId, 5, []);
+            this.$message({
+              message: "打印成功",
+              type: "success",
+            });
+            this.orderList.map((item, index) => {
+              if (item.orderId == orderId) {
+                this.orderList.splice(index, 1);
+              }
+            });
+            this.totalNumber = this.orderList.length;
+            if (this.totalNumber > 0) {
+              this.hasOrder = true;
+            } else {
+              this.hasOrder = false;
+            }
+          }
+          break;
+        case "ending":
+          if (json.jobstatustext != "") {
+            this.updateOrderStatus(orderId, 6, [
+              {
+                docId: docId,
+                filePrintStatus: 4,
+              },
+            ]);
+          }
+          break;
+        default:
+          break;
+      }
+    },
     async handleDownloadDoc() {
       this.dialogDownload = false;
       this.downloadDocList
         .filter((d) => d.checked)
         .forEach((item) => {
-          debugger;
-          this.downloadTest(item.url);
-          //this.downloadFile(item.url);
+          this.downloadFile(item.url);
         });
     },
     async handleFolder() {
@@ -251,57 +369,26 @@ export default {
         });
       }
     },
-    downloadTest(url) {
-      // 获取下载按钮
-      //const downloadButton = document.getElementById("downloadButton");
-
-      // 文件的URL
-      // const fileUrl =
-      //   "https://www.runoob.com/wp-content/uploads/2013/06/image-icon.png";
+    downloadFile(url) {
       const fileUrl = url;
-      // 使用XMLHttpRequest下载文件
       const xhr = new XMLHttpRequest();
-      xhr.responseType = "blob"; // 将响应类型设置为Blob
-
+      xhr.responseType = "blob";
       xhr.onload = function () {
-        debugger;
         if (xhr.status === 200) {
-          // 创建一个Blob URL，用于下载
           const blobUrl = URL.createObjectURL(xhr.response);
-
-          // 创建一个下载链接
           const downloadLink = document.createElement("a");
           downloadLink.href = blobUrl;
           downloadLink.download = "sample.png";
           downloadLink.style.display = "none";
-
-          // 将下载链接添加到文档中
           document.body.appendChild(downloadLink);
-
-          // 模拟点击下载链接
           downloadLink.click();
-
-          // 下载完成后触发通知
-          //showNotification("文件下载已完成！");
-          alert("文件下载已完成！");
+          //alert("文件下载已完成！");
         } else {
-          alert("文件下载失败！");
+          //alert("文件下载失败！");
         }
       };
-
-      // 发送GET请求以下载文件
       xhr.open("GET", fileUrl);
       xhr.send();
-    },
-    downloadFile(path) {
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      iframe.style.height = 0;
-      iframe.src = path;
-      document.body.appendChild(iframe);
-      setTimeout(() => {
-        iframe.remove();
-      }, 5 * 60 * 1000);
     },
     async handleCancel() {
       this.$confirm("是否确认取消订单并进行退款?", {
@@ -331,7 +418,6 @@ export default {
     },
     fileChange(e) {
       try {
-        debugger;
         const file = document.getElementById("file");
         if (file == null) return;
         console.log(file);
@@ -342,69 +428,6 @@ export default {
     btnChange() {
       var file = document.getElementById("file");
       file.click();
-    },
-    // 获取打印机列表
-    getPrintList() {
-      // const json = {
-      //   action: "printers",
-      //   refresh: true,
-      //   defaultprn: true,
-      // };
-      printWorld.CallbackOnPrinterList((list) => {
-        this.printList = list.val;
-        // console.log(this.printList)
-        this.printList.forEach((item) => {
-          if (item.default) {
-            this.form.printer = item.name;
-          }
-        });
-      });
-      //printWorld.Act(json);
-    },
-    // 打印
-    print() {
-      console.log("打印", this.form);
-      if (this.form.content == "") {
-        alert("请输入链接");
-        return;
-      }
-      printWorld.Act(this.form);
-    },
-    // 预览
-    preview() {
-      const json = { ...this.form, action: "previewfile" };
-      console.log("预览", this.form, json);
-      if (this.form.content == "") {
-        alert("请输入链接");
-        return;
-      }
-      printWorld.Act(json);
-    },
-    // 获取文件页数代码，如下，请参考：
-    FilePages() {
-      startTime = new Date().getTime();
-      var json = {};
-      json.action = "filepages";
-      json.format = "pdf_url";
-      // json.content = "https://img.bazhuay.com/1690791455125.docx?doc-convert/preview";
-      // json.content = "https://www.webprintworld.com/download/master.pdf";
-      // json.content = "https://img.bazhuay.com/1691640429623_903.pdf";
-      json.content = "https://img.bazhuay.com/1691717961600_12.pdf";
-
-      console.log("json", json);
-      printWorld.CallbackOnFilePages(this.Callback4FilePages);
-      if (!printWorld.Act(json)) {
-        alert(printWorld.GetLastError());
-      }
-    },
-    Callback4FilePages(json) {
-      console.log("time=", new Date().getTime() - startTime);
-      console.log("printWorld.Callback4FilePages", json);
-      if (json.error == undefined) {
-        // alert(json.val); //json.val，页数
-      } else {
-        alert(json.error);
-      }
     },
   },
 };
