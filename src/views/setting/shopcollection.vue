@@ -8,7 +8,7 @@
       class="demo-ruleForm"
     >
       <el-form-item label="门店打烊" prop="isOpen">
-        <el-switch v-model="isOpen"></el-switch>
+        <el-switch v-model="ruleForm.isShut"></el-switch>
         <div class="spec">
           开启后顾客将无法正常下单打印，用于有事闭店/暂不营业等用途
         </div>
@@ -85,6 +85,7 @@ export default {
       isOpen: false,
       ruleForm: {
         id: "1",
+        isShut: false,
         name: "",
         address: "",
         contact: "",
@@ -125,8 +126,7 @@ export default {
     },
     onSubmit() {
       debugger;
-      //this.dialog = true;
-      let res = settingApi.updatePrintShop(this.ruleForm).then((res) => {
+      settingApi.updatePrintShop(this.ruleForm).then((res) => {
         this.$message({
           message: "保存成功",
           type: "success",

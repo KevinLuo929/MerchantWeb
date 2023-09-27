@@ -124,12 +124,12 @@
             <el-checkbox :label="9">A4</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
-        <el-form-item>
+        <!-- <el-form-item>
           <span slot="label" class="dialog-label">出纸优先级：</span>
           <el-checkbox v-model="form.isPriority"
             >订单优先使用该机器进行打印</el-checkbox
           >
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
 
       <div slot="footer" class="dialog-footer text-align-right">
@@ -223,7 +223,7 @@ export default {
     handleAddPrinter() {
       this.isAdd = true;
       this.dialogVisible = true;
-      this.form = {};
+      this.form.printerName = "";
       this.form.supportPaperKind = [];
       this.form.supportColor = [];
       this.form.supportDuplex = [];

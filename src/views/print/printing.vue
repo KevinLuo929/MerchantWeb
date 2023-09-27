@@ -221,15 +221,13 @@ export default {
         var printer = this.getRecommendPrinter(item.orderId);
         item.printDocModels.forEach((doc) => {
           this.printJson.printer = printer;
-          //this.printJson.printer = "HP LaserJet Professional M1219nf MFP";
           this.printJson.content = doc.url;
           this.printJson.papersize = doc.paperKind;
           this.printJson.orientation = doc.pageOrientation;
           this.printJson.colorful = doc.printColor;
           this.printJson.duplex = doc.printDuplex;
           this.printJson.copies = doc.copies;
-          //this.printJson.pages2print = this.getFormatPrintPage(doc.printPages);
-          this.printJson.pages2print = "1";
+          this.printJson.pages2print = this.getFormatPrintPage(doc.printPages);
           this.printJson.printtask = item.orderId + "|" + doc.id;
           //this.print();
         });
@@ -316,18 +314,6 @@ export default {
           break;
       }
     },
-
-    //获取打印机状态
-    getPrinterStatus() {
-      var json = {};
-      json.action = "prnstatus";
-      json.printer = "HP LaserJet Professional M1219nf MFP";
-      printWorld.CallbackOnPrinterStatus(this.printerStatus);
-      if (!printWorld.Act(json)) {
-        alert(printWorld.GetLastError());
-      }
-    },
-    printerStatus(json) {},
   },
 };
 </script>

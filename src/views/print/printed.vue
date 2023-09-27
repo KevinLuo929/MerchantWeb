@@ -242,7 +242,7 @@ export default {
       downloadDocList: [],
       printJson: {
         action: "printfile",
-        format: "file_url", // pdf_url,word_url,excel_url,ppt_url
+        format: "file_url",
         content: "",
         printer: "HP LaserJet Professional M1219nf MFP",
         papersize: "9",
@@ -299,16 +299,61 @@ export default {
         );
       });
     },
+    getRecommendPrinter(orderId) {
+      var printer = "";
+      if (this.printerList.length == 1) {
+        return this.printerList[0].printerName;
+      } else {
+        var currentOrderDocs = this.orderList.filter(
+          (o) => o.orderId == orderId
+        )[0].printDocModels;
+        if (currentOrderDocs.findIndex((o) => o.printColor == 2) >= 0) {
+          if (currentOrderDocs.findIndex((o) => o.printColor == 1) >= 0) {
+            printer =
+              this.blackAndColorfulPrinterList[
+                Math.floor(
+                  Math.random() * this.blackAndColorfulPrinterList.length
+                )
+              ].printerName;
+          } else {
+            var availablePrinter = this.colorfulPrinterList.concat(
+              this.blackAndColorfulPrinterList
+            );
+            printer =
+              availablePrinter[
+                Math.floor(Math.random() * availablePrinter.length)
+              ].printerName;
+          }
+        } else {
+          if (this.blackPrinterList.length > 0) {
+            printer =
+              this.blackPrinterList[
+                Math.floor(Math.random() * this.blackPrinterList.length)
+              ].printerName;
+          } else {
+            printer =
+              this.blackAndColorfulPrinterList[
+                Math.floor(
+                  Math.random() * this.blackAndColorfulPrinterList.length
+                )
+              ].printerName;
+          }
+        }
+        alert(printer);
+        return printer;
+      }
+    },
     async handlePrint(item) {
+      var printer = this.getRecommendPrinter(item.orderId);
       item.printDocModels.forEach((d) => {
+        this.printJson.printer = printer;
         this.printJson.content = d.url;
         this.printJson.papersize = d.paperKind;
         this.printJson.orientation = d.pageOrientation;
         this.printJson.colorful = d.printColor;
         this.printJson.duplex = d.printDuplex;
         this.printJson.copies = d.copies;
-        //this.printJson.pages2print = this.getFormatPrintPage(d.printPages);
-        this.printJson.pages2print = "1";
+        this.printJson.pages2print = this.getFormatPrintPage(d.printPages);
         this.printJson.printtask = item.orderId;
         this.print();
       });
@@ -433,9 +478,7 @@ export default {
         const file = document.getElementById("file");
         if (file == null) return;
         console.log(file);
-      } catch (error) {
-        console.debug("choice file err:", error);
-      }
+      } catch (error) {}
     },
     btnChange() {
       var file = document.getElementById("file");

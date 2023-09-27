@@ -215,7 +215,7 @@ export default {
         .getOrder({
           pageIndex: 1,
           pageSize: 100,
-          orderStatus: [6],
+          orderStatus: [1, 6],
         })
         .then((res) => {
           this.totalNumber = res.totalNumber;
@@ -292,8 +292,7 @@ export default {
         this.printJson.colorful = d.printColor;
         this.printJson.duplex = d.printDuplex;
         this.printJson.copies = d.copies;
-        //this.printJson.pages2print = this.getFormatPrintPage(d.printPages);
-        this.printJson.pages2print = "1";
+        this.printJson.pages2print = this.getFormatPrintPage(d.printPages);
         this.printJson.printtask = item.orderId;
         this.print();
       });
@@ -330,12 +329,6 @@ export default {
         case "starting":
           break;
         case "printing":
-          // msg = json.printer + "正在打印中...";
-          // this.orderList.forEach((p) => {
-          //   if (p.orderId == orderId) {
-          //     this.$set(p, "PrintMsg", msg);
-          //   }
-          // });
           this.updateOrderStatus(orderId, printingOrder[0].orderStatus, [
             {
               docId: docId,
