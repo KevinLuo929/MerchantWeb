@@ -120,18 +120,18 @@ export default {
         printtask: "",
       },
       printerList: [],
-      defaultPrinter: "",
+      blackPrinterList: [],
+      colorfulPrinterList: [],
+      blackAndColorfulPrinterList: [],
     };
   },
   created() {
     printWorld = GetPrintWorld();
+
     this.search();
-    // this.getPrintList();
-    // this.getPrinterStatus();
-    // this.FilePages();
   },
   methods: {
-    search() {
+    async search() {
       printerApi
         .getOrder({
           pageIndex: 1,
@@ -146,34 +146,66 @@ export default {
             this.hasOrder = false;
           }
           this.orderList = res.result;
-          this.downloadFile();
-          this.autoPrint();
+          this.getAllPrinter(this.autoPrint);
         });
     },
-    getPrinter() {
+    getAllPrinter(callback) {
       settingApi.getPrinterSettingsData().then((res) => {
-        // let priorityPrinter = res.filter((p) => p.isPriority);
-        // if ((priorityPrinter.length = 0)) {
-        //   this.defaultPrinter =
-        //     res[Math.floor(Math.random() * res.length)].printerName;
-        // } else {
-        //   this.defaultPrinter = priorityPrinter[0].printerName;
-        // }
-        this.defaultPrinter =
-          res[Math.floor(Math.random() * res.length)].printerName;
+        this.printerList = res;
+        this.blackPrinterList = res.filter((p) => p.supportColor == 1);
+        this.colorfulPrinterList = res.filter((p) => p.supportColor == 2);
+        this.blackAndColorfulPrinterList = res.filter(
+          (p) => p.supportColor == 3
+        );
+        callback();
       });
+    },
+    getRecommendPrinter(orderId) {
+      var printer = "";
+      if (this.printerList.length == 1) {
+        return this.printerList[0].printerName;
+      } else {
+        var currentOrderDocs = this.orderList.filter(
+          (o) => o.orderId == orderId
+        )[0].printDocModels;
+        if (currentOrderDocs.findIndex((o) => o.printColor == 2) >= 0) {
+          if (currentOrderDocs.findIndex((o) => o.printColor == 1) >= 0) {
+            printer =
+              this.blackAndColorfulPrinterList[
+                Math.floor(
+                  Math.random() * this.blackAndColorfulPrinterList.length
+                )
+              ].printerName;
+          } else {
+            var availablePrinter = this.colorfulPrinterList.concat(
+              this.blackAndColorfulPrinterList
+            );
+            printer =
+              availablePrinter[
+                Math.floor(Math.random() * availablePrinter.length)
+              ].printerName;
+          }
+        } else {
+          if (this.blackPrinterList.length > 0) {
+            printer =
+              this.blackPrinterList[
+                Math.floor(Math.random() * this.blackPrinterList.length)
+              ].printerName;
+          } else {
+            printer =
+              this.blackAndColorfulPrinterList[
+                Math.floor(
+                  Math.random() * this.blackAndColorfulPrinterList.length
+                )
+              ].printerName;
+          }
+        }
+        alert(printer);
+        return printer;
+      }
     },
     handleRefresh() {
       this.search();
-    },
-    handlePause(item) {
-      console.log("handlePause");
-    },
-    async handleRunning() {
-      this.dialogDownload = true;
-    },
-    downloadFile() {
-      //todo
     },
     updateOrderStatus(orderId, orderStatus, docs) {
       printerApi
@@ -184,11 +216,12 @@ export default {
         })
         .then((res) => {});
     },
-    autoPrint() {
+    async autoPrint() {
       this.orderList.forEach((item) => {
+        var printer = this.getRecommendPrinter(item.orderId);
         item.printDocModels.forEach((doc) => {
-          //this.printJson.printer=this.defaultPrinter;
-          this.printJson.printer = "HP LaserJet Professional M1219nf MFP";
+          this.printJson.printer = printer;
+          //this.printJson.printer = "HP LaserJet Professional M1219nf MFP";
           this.printJson.content = doc.url;
           this.printJson.papersize = doc.paperKind;
           this.printJson.orientation = doc.pageOrientation;

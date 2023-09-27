@@ -32,11 +32,11 @@
             :key="item.id"
             class="item-section"
           >
-            <div class="file-type">
-              <span class="item-title">文件类型</span
+            <!-- <div class="file-type">
+              <span class="item-title">纸质类型</span
               ><span class="item-value">{{ item.printerType }}</span>
-            </div>
-            <div class="item-container">
+            </div> -->
+            <div class="file-type">
               <span class="item-title">纸张尺寸</span
               ><span class="item-value">{{
                 enums.PaperKind[item.paperKind]
@@ -166,19 +166,21 @@
       <div>
         <el-form ref="form" :model="form" label-width="100px">
           <el-form-item label="纸张尺寸：">
-            <el-checkbox v-model="form.paperKind">A4</el-checkbox>
+            <el-radio-group v-model="form.paperKind">
+              <el-radio :label="8">A3</el-radio>
+              <el-radio :label="9">A4</el-radio>
+            </el-radio-group>
           </el-form-item>
           <el-form-item label="打印面数：">
             <el-radio-group v-model="form.duplex">
               <el-radio :label="1">单面</el-radio>
-              <el-radio :label="2">长边双面</el-radio>
-              <el-radio :label="3">短边双面</el-radio>
+              <el-radio :label="2">双面</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="打印颜色：">
             <el-radio-group v-model="form.color">
-              <el-radio :label="0">黑白</el-radio>
-              <el-radio :label="1">彩色</el-radio>
+              <el-radio :label="1">黑白</el-radio>
+              <el-radio :label="2">彩色</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="打印单价：">
@@ -212,7 +214,7 @@ export default {
       documentPriceList: [],
       form: {
         id: "",
-        paperKind: "",
+        paperKind: [],
         color: "",
         duplex: "",
         price: "",
@@ -226,6 +228,7 @@ export default {
     search() {
       settingApi.getPrintPriceSettings().then((res) => {
         this.documentPriceList = res;
+        debugger;
       });
     },
     handleClick(tab, event) {
@@ -250,9 +253,6 @@ export default {
       this.isAdd = false;
       this.dialogPriceSettingVisible = true;
       this.form = Object.assign({}, row);
-      if (this.form.paperKind == "9") {
-        this.form.paperKind = true;
-      }
     },
     handleClose(done) {
       this.dialogVisible = false;
@@ -265,7 +265,6 @@ export default {
       debugger;
       if (this.isAdd) {
         if (this.form.paperKind) {
-          this.form.paperKind = 9;
         }
         settingApi.addPrintPriceSettings(this.form).then((res) => {
           this.search();
@@ -276,7 +275,7 @@ export default {
           });
         });
       } else {
-        this.form.paperKind = 9;
+        debugger;
         settingApi.updatePrintPriceSettings(this.form).then((res) => {
           this.search();
           this.dialogPriceSettingVisible = false;

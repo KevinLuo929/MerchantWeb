@@ -254,11 +254,16 @@ export default {
         swap: false,
         printtask: "",
       },
+      printerList: [],
+      blackPrinterList: [],
+      colorfulPrinterList: [],
+      blackAndColorfulPrinterList: [],
     };
   },
   created() {
     printWorld = GetPrintWorld();
     this.search();
+    this.getAllPrinter();
   },
   methods: {
     async search() {
@@ -284,17 +289,14 @@ export default {
     handleRefresh() {
       this.search();
     },
-    getPrinter() {
+    getAllPrinter() {
       settingApi.getPrinterSettingsData().then((res) => {
-        // let priorityPrinter = res.filter((p) => p.isPriority);
-        // if ((priorityPrinter.length = 0)) {
-        //   this.defaultPrinter =
-        //     res[Math.floor(Math.random() * res.length)].printerName;
-        // } else {
-        //   this.defaultPrinter = priorityPrinter[0].printerName;
-        // }
-        this.defaultPrinter =
-          res[Math.floor(Math.random() * res.length)].printerName;
+        this.printerList = res;
+        this.blackPrinterList = res.filter((p) => p.supportColor == 1);
+        this.colorfulPrinterList = res.filter((p) => p.supportColor == 2);
+        this.blackAndColorfulPrinterList = res.filter(
+          (p) => p.supportColor == 3
+        );
       });
     },
     async handlePrint(item) {
@@ -443,7 +445,7 @@ export default {
 };
 </script>
     
-    <style scoped>
+<style scoped>
 .width400px {
   width: 400px;
 }

@@ -44,9 +44,8 @@
             ></span
           >
           <span class="printer-parameter"
-            >配置参数：【{{ enums.PaperKind[item.supportPaperKind] }}】 【{{
-              enums.PageColor[item.supportColor]
-            }}】 【{{ item.printerType }}】</span
+            >配置参数：【{{ item.paperKindText }}】 【{{ item.colorText }}】
+            【{{ item.duplexText }}】</span
           >
         </div>
         <div class="operation-section">
@@ -105,28 +104,25 @@
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">颜色设置：</span>
-          <el-select v-model="form.supportColor" placeholder="请选择颜色">
-            <el-option label="只打黑白" :value="0"></el-option>
-            <el-option label="彩色" :value="1"></el-option>
-          </el-select>
+          <el-checkbox-group v-model="form.supportColor">
+            <el-checkbox :label="1">黑白</el-checkbox>
+            <el-checkbox :label="2">彩色</el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">单双面设置：</span>
-          <el-select v-model="form.printerType" placeholder="请选择单双面">
-            <el-option label="单面" :value="1"></el-option>
-            <el-option label="长边双面" :value="2"></el-option>
-            <el-option label="短边双面" :value="3"></el-option>
-          </el-select>
+          <el-checkbox-group v-model="form.supportDuplex">
+            <el-checkbox :label="1">单面</el-checkbox>
+            <el-checkbox :label="2">双面</el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">支持纸张：</span>
 
-          <el-checkbox
-            v-model="form.supportPaperKind"
-            :true-label="9"
-            :false-label="0"
-            >A4</el-checkbox
-          >
+          <el-checkbox-group v-model="form.supportPaperKind">
+            <el-checkbox :label="8">A3</el-checkbox>
+            <el-checkbox :label="9">A4</el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
         <el-form-item>
           <span slot="label" class="dialog-label">出纸优先级：</span>
@@ -175,13 +171,18 @@ export default {
       form: {
         id: "",
         printerName: "",
-        supportColor: "",
-        supportPaperKind: [],
         printerType: "",
+        driverName: "",
+        supportPaperKind: [],
+        supportColor: [],
+        supportDuplex: [],
       },
       printerList: [],
       localPrinterList: [],
       moment,
+      colorTextList: [],
+      duplexTextList: [],
+      paperKindTextList: [],
     };
   },
   created() {
@@ -191,13 +192,28 @@ export default {
   },
   methods: {
     async search() {
-      let res = settingApi.getPrinterSettingsData().then((res) => {
+      settingApi.getPrinterSettingsData().then((res) => {
+        debugger;
         this.printerList = res;
         this.printerCount = res.length;
         this.printerList.forEach((item) => {
+          this.paperKindTextList = [];
+          this.colorTextList = [];
+          this.duplexTextList = [];
+          item.supportPaperKind.forEach((paperKind) => {
+            this.paperKindTextList.push(enums.PaperKind[paperKind]);
+          });
+          item.supportColor.forEach((color) => {
+            this.colorTextList.push(enums.PageColor[color]);
+          });
+          item.supportDuplex.forEach((duplex) => {
+            this.duplexTextList.push(enums.PageDuplex[duplex]);
+          });
           this.$set(item, "isEnabled", true);
+          this.$set(item, "paperKindText", this.paperKindTextList.join("/"));
+          this.$set(item, "colorText", this.colorTextList.join("/"));
+          this.$set(item, "duplexText", this.duplexTextList.join("/"));
         });
-        console.log(this.printerList);
       });
     },
     showDeleteDialog(id) {
@@ -208,6 +224,9 @@ export default {
       this.isAdd = true;
       this.dialogVisible = true;
       this.form = {};
+      this.form.supportPaperKind = [];
+      this.form.supportColor = [];
+      this.form.supportDuplex = [];
     },
     handleUpdPrinter(row) {
       this.isAdd = false;
@@ -215,23 +234,22 @@ export default {
       this.form = Object.assign({}, row);
     },
     handleDeletePrinter() {
-      let res = settingApi
-        .deletePrinterSettings(this.currentSelectedId)
-        .then((res) => {
-          this.dialogDelete = false;
-          this.$message({
-            message: "删除成功",
-            type: "success",
-          });
-          this.search();
+      settingApi.deletePrinterSettings(this.currentSelectedId).then((res) => {
+        this.dialogDelete = false;
+        this.$message({
+          message: "删除成功",
+          type: "success",
         });
+        this.search();
+      });
     },
     handleBroadcastSwitch() {
       alert(this.isBroadcast);
     },
     onSubmit() {
-      debugger;
+      console.log(this.form);
       if (this.isAdd) {
+        this.form.driverName = this.form.printerName;
         settingApi.addPrinterSettings(this.form).then((res) => {
           this.search();
           this.dialogVisible = false;

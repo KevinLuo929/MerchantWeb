@@ -170,6 +170,7 @@ import printerApi from "@/api/printer";
 import settingApi from "@/api/setting";
 import moment from "moment";
 import { enums } from "@/utils/common";
+let printWorld;
 export default {
   data() {
     return {
@@ -187,7 +188,7 @@ export default {
         action: "printfile",
         format: "file_url",
         content: "",
-        printer: "HP LaserJet Professional M1219nf MFP",
+        printer: "",
         papersize: "9",
         orientation: "0",
         colorful: "-1",
@@ -197,14 +198,20 @@ export default {
         swap: false,
         printtask: "",
       },
+      printerList: [],
+      blackPrinterList: [],
+      colorfulPrinterList: [],
+      blackAndColorfulPrinterList: [],
     };
   },
   created() {
+    printWorld = GetPrintWorld();
     this.search();
+    this.getAllPrinter();
   },
   methods: {
     async search() {
-      let res = printerApi
+      printerApi
         .getOrder({
           pageIndex: 1,
           pageSize: 100,
@@ -221,21 +228,64 @@ export default {
     handleSearch() {
       this.search();
     },
-    getPrinter() {
+    getAllPrinter() {
       settingApi.getPrinterSettingsData().then((res) => {
-        // let priorityPrinter = res.filter((p) => p.isPriority);
-        // if ((priorityPrinter.length = 0)) {
-        //   this.defaultPrinter =
-        //     res[Math.floor(Math.random() * res.length)].printerName;
-        // } else {
-        //   this.defaultPrinter = priorityPrinter[0].printerName;
-        // }
-        this.defaultPrinter =
-          res[Math.floor(Math.random() * res.length)].printerName;
+        this.printerList = res;
+        this.blackPrinterList = res.filter((p) => p.supportColor == 1);
+        this.colorfulPrinterList = res.filter((p) => p.supportColor == 2);
+        this.blackAndColorfulPrinterList = res.filter(
+          (p) => p.supportColor == 3
+        );
       });
     },
+    getRecommendPrinter(orderId) {
+      var printer = "";
+      if (this.printerList.length == 1) {
+        return this.printerList[0].printerName;
+      } else {
+        var currentOrderDocs = this.orderList.filter(
+          (o) => o.orderId == orderId
+        )[0].printDocModels;
+        if (currentOrderDocs.findIndex((o) => o.printColor == 2) >= 0) {
+          if (currentOrderDocs.findIndex((o) => o.printColor == 1) >= 0) {
+            printer =
+              this.blackAndColorfulPrinterList[
+                Math.floor(
+                  Math.random() * this.blackAndColorfulPrinterList.length
+                )
+              ].printerName;
+          } else {
+            var availablePrinter = this.colorfulPrinterList.concat(
+              this.blackAndColorfulPrinterList
+            );
+            printer =
+              availablePrinter[
+                Math.floor(Math.random() * availablePrinter.length)
+              ].printerName;
+          }
+        } else {
+          if (this.blackPrinterList.length > 0) {
+            printer =
+              this.blackPrinterList[
+                Math.floor(Math.random() * this.blackPrinterList.length)
+              ].printerName;
+          } else {
+            printer =
+              this.blackAndColorfulPrinterList[
+                Math.floor(
+                  Math.random() * this.blackAndColorfulPrinterList.length
+                )
+              ].printerName;
+          }
+        }
+        alert(printer);
+        return printer;
+      }
+    },
     async handlePrint(item) {
+      var printer = this.getRecommendPrinter(item.orderId);
       item.printDocModels.forEach((d) => {
+        this.printJson.printer = printer;
         this.printJson.content = d.url;
         this.printJson.papersize = d.paperKind;
         this.printJson.orientation = d.pageOrientation;
@@ -410,7 +460,7 @@ export default {
         type: "warning",
       })
         .then(() => {
-          alert("确 认");
+          //doSomething()
         })
         .catch(() => {
           //doSomething()
