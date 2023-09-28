@@ -243,7 +243,7 @@ export default {
       });
     },
     handleBroadcastSwitch() {
-      alert(this.isBroadcast);
+      // alert(this.isBroadcast);
     },
     onSubmit() {
       console.log(this.form);

@@ -210,7 +210,6 @@ export default {
               ].printerName;
           }
         }
-        alert(printer);
         return printer;
       }
     },
