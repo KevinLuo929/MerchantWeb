@@ -125,6 +125,19 @@ const http = {
       },
     });
   },
+  login(url, params) {
+    return service.post(url, params, {
+      transformRequest: [
+        (params) => {
+          // return  params.username;
+          return '"' + params.username + '"';
+        },
+      ],
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  },
 };
 
 export default http;
