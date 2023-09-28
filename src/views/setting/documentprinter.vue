@@ -193,7 +193,6 @@ export default {
   methods: {
     async search() {
       settingApi.getPrinterSettingsData().then((res) => {
-        debugger;
         this.printerList = res;
         this.printerCount = res.length;
         this.printerList.forEach((item) => {

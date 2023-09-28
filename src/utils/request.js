@@ -113,7 +113,6 @@ const http = {
     });
   },
   login(url, params) {
-    debugger;
     return service.post(url, params, {
       transformRequest: [
         (params) => {

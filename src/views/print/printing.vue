@@ -123,31 +123,41 @@ export default {
       blackPrinterList: [],
       colorfulPrinterList: [],
       blackAndColorfulPrinterList: [],
+      isShut: false,
     };
   },
   created() {
     printWorld = GetPrintWorld();
-
-    this.search();
+    this.getShopStatus(this.search);
   },
   methods: {
     async search() {
-      printerApi
-        .getOrder({
-          pageIndex: 1,
-          pageSize: 100,
-          orderStatus: [1],
-        })
-        .then((res) => {
-          this.totalNumber = res.totalNumber;
-          if (this.totalNumber > 0) {
-            this.hasOrder = true;
-          } else {
-            this.hasOrder = false;
-          }
-          this.orderList = res.result;
-          this.getAllPrinter(this.autoPrint);
-        });
+      if (this.isShut) {
+        this.hasOrder = false;
+      } else {
+        printerApi
+          .getOrder({
+            pageIndex: 1,
+            pageSize: 100,
+            orderStatus: [1],
+          })
+          .then((res) => {
+            this.totalNumber = res.totalNumber;
+            if (this.totalNumber > 0) {
+              this.hasOrder = true;
+            } else {
+              this.hasOrder = false;
+            }
+            this.orderList = res.result;
+            this.getAllPrinter(this.autoPrint);
+          });
+      }
+    },
+    getShopStatus(callback) {
+      settingApi.getPrintShop().then((res) => {
+        this.isShut = res.isShut;
+        callback();
+      });
     },
     getAllPrinter(callback) {
       settingApi.getPrinterSettingsData().then((res) => {

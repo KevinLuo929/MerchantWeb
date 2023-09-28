@@ -228,7 +228,6 @@ export default {
     search() {
       settingApi.getPrintPriceSettings().then((res) => {
         this.documentPriceList = res;
-        debugger;
       });
     },
     handleClick(tab, event) {
@@ -262,7 +261,6 @@ export default {
       this.dialogVisible = false;
     },
     handleSavePriceSetting() {
-      debugger;
       if (this.isAdd) {
         if (this.form.paperKind) {
         }
@@ -275,7 +273,6 @@ export default {
           });
         });
       } else {
-        debugger;
         settingApi.updatePrintPriceSettings(this.form).then((res) => {
           this.search();
           this.dialogPriceSettingVisible = false;
@@ -293,9 +290,7 @@ export default {
         type: "warning",
       })
         .then(() => {
-          debugger;
           settingApi.deletePrintPriceSettings(id).then((res) => {
-            debugger;
             console.log(res);
             this.$message({
               message: "删除成功",

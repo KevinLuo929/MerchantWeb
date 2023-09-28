@@ -125,7 +125,6 @@ export default {
       });
     },
     onSubmit() {
-      debugger;
       settingApi.updatePrintShop(this.ruleForm).then((res) => {
         this.$message({
           message: "保存成功",
